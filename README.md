@@ -16,10 +16,15 @@ Source data: <https://archive.ics.uci.edu/dataset/264/eeg+eye+state>
 
 ## Status
 
-**Phase A complete — data + EDA + preprocessing.** Modeling
-(LDA / KNN / PCA→LDA / PCR-as-classifier under both shuffled and blocked
-k-fold cross-validation) is staged for `notebooks/02_modeling.ipynb` and is
-not yet included in this checkpoint.
+**Phase A complete** — data + EDA + preprocessing.
+**Phase B complete** — LDA / KNN / PCA→LDA / PCR-as-classifier evaluated
+under both shuffled and blocked 5-fold cross-validation in
+`notebooks/02_modeling.ipynb`. Across the four models the average
+shuffled-CV accuracy exceeds blocked-CV accuracy by roughly 25 percentage
+points; KNN at the best blocked `k` shows the most dramatic gap (≈47 pp,
+shuffled ≈ 0.97 vs blocked ≈ 0.50). The headline comparison lives at
+`figures/14_blocked_vs_shuffled_cv.png` and
+`tables/03_cv_accuracy_comparison.csv`.
 
 ## Repository layout
 
@@ -31,15 +36,20 @@ not yet included in this checkpoint.
 ├── tables/                   # EDA summary tables (committed)
 ├── notebooks/
 │   ├── 00_fetch_data.ipynb   # downloads UCI #264, asserts shape, writes manifest
-│   └── 01_eda.ipynb          # exploratory analysis (11 figures, 2 tables)
+│   ├── 01_eda.ipynb          # exploratory analysis (11 figures, 2 tables)
+│   └── 02_modeling.ipynb     # supervised models + blocked vs shuffled CV
 ├── scripts/
-│   └── preprocess.py         # full preprocessing CLI (idempotent)
+│   ├── preprocess.py         # full preprocessing CLI (idempotent)
+│   └── _build_notebooks.py   # authoring helper for the .ipynb files
 ├── src/
 │   ├── data.py               # loaders, cleaner, splitters, scaler
 │   ├── cv.py                 # blocked + shuffled k-fold index generators
+│   ├── models.py             # LDA / KNN / PCA→LDA / PCR-as-classifier
+│   ├── evaluate.py           # CV orchestration + holdout scoring
 │   └── plotting.py           # shared figure helpers
 ├── tests/
-│   └── test_smoke.py         # pytest smoke tests
+│   ├── test_smoke.py         # data + CV smoke tests
+│   └── test_modeling.py      # model + evaluation smoke tests
 ├── Makefile
 ├── requirements.txt
 └── LICENSE
@@ -52,6 +62,7 @@ pip install -r requirements.txt
 jupyter nbconvert --to notebook --execute notebooks/00_fetch_data.ipynb --inplace
 python scripts/preprocess.py
 jupyter nbconvert --to notebook --execute notebooks/01_eda.ipynb --inplace
+jupyter nbconvert --to notebook --execute notebooks/02_modeling.ipynb --inplace
 pytest tests/
 ```
 
@@ -61,12 +72,13 @@ Or use the Makefile:
 make fetch     # download the raw CSV via the fetch notebook
 make data      # run scripts/preprocess.py (requires the raw CSV)
 make figures   # execute the EDA notebook (depends on `data`)
+make modeling  # execute the modeling notebook (depends on `data`)
 make test      # run pytest
 ```
 
-`make all` runs `data` + `figures`. `make fetch` is intentionally a separate
-target because the raw CSV is already committed under `data/raw/` — most
-contributors won't need to re-download it.
+`make all` runs `data` + `figures` + `modeling`. `make fetch` is
+intentionally a separate target because the raw CSV is already committed
+under `data/raw/` — most contributors won't need to re-download it.
 
 ## Why two cross-validation schemes?
 

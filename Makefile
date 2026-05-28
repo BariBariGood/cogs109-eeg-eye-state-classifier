@@ -1,6 +1,6 @@
-.PHONY: all data figures clean test fetch eda
+.PHONY: all data figures clean test fetch eda modeling
 
-all: data figures
+all: data figures modeling
 
 fetch:
 	jupyter nbconvert --to notebook --execute notebooks/00_fetch_data.ipynb --inplace
@@ -14,6 +14,9 @@ eda: data
 	jupyter nbconvert --to notebook --execute notebooks/01_eda.ipynb --inplace
 
 figures: eda
+
+modeling: data
+	jupyter nbconvert --to notebook --execute --inplace notebooks/02_modeling.ipynb
 
 test:
 	pytest tests/
