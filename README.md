@@ -18,12 +18,14 @@ Source data: <https://archive.ics.uci.edu/dataset/264/eeg+eye+state>
 
 **Phase A complete** — data + EDA + preprocessing.
 **Phase B complete** — LDA / KNN / PCA→LDA / PCR-as-classifier evaluated
-under both shuffled and blocked 5-fold cross-validation in
-`notebooks/02_modeling.ipynb`. Across the four models the average
-shuffled-CV accuracy exceeds blocked-CV accuracy by roughly 25 percentage
-points; KNN at the best blocked `k` shows the most dramatic gap (≈47 pp,
-shuffled ≈ 0.97 vs blocked ≈ 0.50). The headline comparison lives at
-`figures/14_blocked_vs_shuffled_cv.png` and
+under three 5-fold cross-validation schemes in `notebooks/02_modeling.ipynb`:
+shuffled (leaky), naive blocked (leakage-resistant but per-fold class-balance
+pathology drops every model at or below the majority-class baseline), and
+**stratified blocked** (leakage-resistant *and* class-balanced per fold —
+the honest estimate). Stratified blocking recovers ~12–28 pp of accuracy
+the naive scheme artificially destroyed; the residual stratified-vs-shuffled
+gap is the true leakage signal (largest for KNN at ~20 pp). The headline
+three-way comparison lives at `figures/14_cv_comparison_three_way.png` and
 `tables/03_cv_accuracy_comparison.csv`.
 
 ## Repository layout
@@ -80,13 +82,22 @@ make test      # run pytest
 intentionally a separate target because the raw CSV is already committed
 under `data/raw/` — most contributors won't need to re-download it.
 
-## Why two cross-validation schemes?
+## Why three cross-validation schemes?
 
 Adjacent samples in this recording have a lag-1 label autocorrelation of
-**r ≈ 0.997** (see `figures/08_label_autocorrelation.png`). Shuffled k-fold
-CV would leak neighboring samples into the test fold and inflate accuracy.
-We therefore freeze both a shuffled and a time-blocked CV scheme during
-preprocessing so the modeling notebook can report both numbers side by side.
+**r ≈ 0.997** (see `figures/08_label_autocorrelation.png`), so shuffled
+k-fold CV leaks neighboring samples into the test fold and inflates
+accuracy. A naive 5-block time split fixes that leakage but, on this
+single-subject recording, the five macro-blocks happen to span very
+different class balances (folds 3 and 4 land on segments that are ~20%
+and ~66% class-0 vs ~54% overall), which drives every model's naive
+blocked accuracy at or below the majority-class baseline. Stratified
+blocked CV cuts the train partition into 100 short contiguous segments
+(~0.93 s each at 128 Hz) and redistributes them across folds so that
+each fold's class balance is close to the overall balance, while keeping
+test samples in contiguous bursts. All three schemes are frozen at
+preprocessing time so the modeling notebook can report all three numbers
+side by side.
 
 ## Authors
 
