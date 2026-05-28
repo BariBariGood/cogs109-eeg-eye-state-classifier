@@ -5,7 +5,11 @@ Reads ``data/raw/eeg_eye_state.csv`` (produced by
 ``notebooks/00_fetch_data.ipynb``), runs the full clean → split → scale →
 fold-index pipeline, and writes deterministic artifacts to ``data/processed/``.
 
-Running this twice produces identical output.
+All files under ``data/processed/`` are byte-identical across runs (the CSVs,
+the scaler JSONs, and ``cv_folds.json`` only depend on the raw CSV and the
+fixed seed). The only field that changes between runs is the
+``last_preprocessed_at`` timestamp inside ``data/raw/manifest.json``; the
+``sha256`` and dataset dimensions in that manifest are preserved.
 """
 
 from __future__ import annotations

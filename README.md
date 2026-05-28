@@ -58,10 +58,15 @@ pytest tests/
 Or use the Makefile:
 
 ```bash
-make data      # raw fetch + preprocess
-make figures   # execute the EDA notebook
+make fetch     # download the raw CSV via the fetch notebook
+make data      # run scripts/preprocess.py (requires the raw CSV)
+make figures   # execute the EDA notebook (depends on `data`)
 make test      # run pytest
 ```
+
+`make all` runs `data` + `figures`. `make fetch` is intentionally a separate
+target because the raw CSV is already committed under `data/raw/` — most
+contributors won't need to re-download it.
 
 ## Why two cross-validation schemes?
 
