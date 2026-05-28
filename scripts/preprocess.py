@@ -129,6 +129,8 @@ def main() -> int:
         json.dump(folds_payload, f)
 
     # Update the raw manifest's processed-at timestamp without touching the SHA.
+    # We only write the manifest when its non-timestamp content would change;
+    # otherwise we leave the file alone to avoid spurious diffs on re-runs.
     manifest_path = os.path.join(RAW_DIR, "manifest.json")
     if os.path.exists(manifest_path):
         with open(manifest_path) as f:
@@ -139,9 +141,14 @@ def main() -> int:
             "n_rows": 14980,
             "n_cols": 15,
         }
-    manifest["last_preprocessed_at"] = datetime.now(timezone.utc).isoformat()
-    with open(manifest_path, "w") as f:
-        json.dump(manifest, f, indent=2, sort_keys=True)
+    new_manifest = dict(manifest)
+    new_manifest["last_preprocessed_at"] = datetime.now(timezone.utc).isoformat()
+    # If the only thing that would change is the timestamp, keep the file as-is.
+    cmp_old = {k: v for k, v in manifest.items() if k != "last_preprocessed_at"}
+    cmp_new = {k: v for k, v in new_manifest.items() if k != "last_preprocessed_at"}
+    if cmp_old != cmp_new or "last_preprocessed_at" not in manifest:
+        with open(manifest_path, "w") as f:
+            json.dump(new_manifest, f, indent=2, sort_keys=True)
 
     log.info("preprocess complete; artifacts under %s", PROCESSED_DIR)
     return 0
