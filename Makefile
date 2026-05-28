@@ -1,6 +1,6 @@
-.PHONY: all data figures clean test fetch eda
+.PHONY: all data figures clean test fetch eda modeling poster
 
-all: data figures
+all: data figures modeling
 
 fetch:
 	jupyter nbconvert --to notebook --execute notebooks/00_fetch_data.ipynb --inplace
@@ -15,8 +15,14 @@ eda: data
 
 figures: eda
 
+modeling: data
+	jupyter nbconvert --to notebook --execute --inplace notebooks/02_modeling.ipynb
+
+poster:
+	python scripts/build_poster.py
+
 test:
 	pytest tests/
 
 clean:
-	rm -rf data/processed/ figures/*.png tables/*.csv
+	rm -rf data/processed/ figures/*.png tables/*.csv poster/poster.pptx poster/poster_preview.png

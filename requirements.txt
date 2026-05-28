@@ -7,4 +7,6 @@ seaborn>=0.13,<1.0
 jupyter>=1.0
 notebook>=7.0
 ucimlrepo>=0.0.7
+python-pptx>=1.0,<2.0
+pillow>=10.0
 pytest>=8.0
