@@ -71,6 +71,76 @@ def test_blocked_folds_are_contiguous():
         assert np.array_equal(te, np.arange(te[0], te[-1] + 1))
 
 
+def _synthetic_block_labels(n: int = 12000, n_blocks: int = 24, seed: int = 0) -> np.ndarray:
+    """Build a label sequence with strong block structure but a 50/50 overall mix.
+
+    Mirrors the UCI EEG eye-state recording pattern: contiguous runs of one
+    class followed by contiguous runs of the other.
+    """
+    rng = np.random.default_rng(seed)
+    block_lens = rng.integers(low=200, high=900, size=n_blocks)
+    block_lens = (block_lens * (n / block_lens.sum())).astype(int)
+    block_lens[-1] += n - int(block_lens.sum())
+    out = np.empty(n, dtype=int)
+    pos = 0
+    label = 0
+    for L in block_lens:
+        out[pos : pos + L] = label
+        pos += L
+        label = 1 - label
+    return out
+
+
+def test_stratified_blocked_folds_deterministic():
+    labels = _synthetic_block_labels(n=11917, n_blocks=24, seed=0)
+    a = cv_mod.stratified_blocked_kfold_indices(
+        labels, n_splits=5, n_segments=50, seed=42
+    )
+    b = cv_mod.stratified_blocked_kfold_indices(
+        labels, n_splits=5, n_segments=50, seed=42
+    )
+    assert len(a) == len(b) == 5
+    for (tr1, te1), (tr2, te2) in zip(a, b):
+        assert np.array_equal(tr1, tr2)
+        assert np.array_equal(te1, te2)
+
+
+def test_stratified_blocked_folds_balanced():
+    labels = _synthetic_block_labels(n=11917, n_blocks=24, seed=0)
+    overall_c0 = float((labels == 0).mean())
+    folds = cv_mod.stratified_blocked_kfold_indices(
+        labels, n_splits=5, n_segments=50, seed=42
+    )
+    for fold_i, (_, te) in enumerate(folds):
+        fold_c0 = float((labels[te] == 0).mean())
+        assert abs(fold_c0 - overall_c0) < 0.05, (
+            f"fold {fold_i} class-0 pct {fold_c0:.3f} differs from overall "
+            f"{overall_c0:.3f} by more than 5 percentage points"
+        )
+
+
+def test_stratified_blocked_folds_cover_all_samples_exactly_once():
+    labels = _synthetic_block_labels(n=11917, n_blocks=24, seed=0)
+    folds = cv_mod.stratified_blocked_kfold_indices(
+        labels, n_splits=5, n_segments=50, seed=42
+    )
+    seen = np.concatenate([te for _, te in folds])
+    assert sorted(seen.tolist()) == list(range(len(labels)))
+    # And train / test are disjoint within each fold.
+    for tr, te in folds:
+        assert len(np.intersect1d(tr, te)) == 0
+        assert len(tr) + len(te) == len(labels)
+
+
+def test_stratified_blocked_folds_segment_count_validation():
+    labels = _synthetic_block_labels(n=11917, n_blocks=24, seed=0)
+    # n_segments must be a multiple of n_splits.
+    with pytest.raises(ValueError):
+        cv_mod.stratified_blocked_kfold_indices(
+            labels, n_splits=5, n_segments=49, seed=42
+        )
+
+
 def test_splits_disjoint():
     df = data_mod.fetch_raw()
     cleaned = data_mod.clean(df)
