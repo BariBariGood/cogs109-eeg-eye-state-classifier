@@ -79,5 +79,13 @@ def test_splits_disjoint():
     assert len(train) > 0 and len(test) > 0
 
 
+def test_save_scaler_handles_bare_filename(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    scaler = {"AF3": {"mu": 0.0, "sd": 1.0}}
+    data_mod.save_scaler(scaler, "scaler.json")
+    assert (tmp_path / "scaler.json").exists()
+    assert data_mod.load_scaler(str(tmp_path / "scaler.json")) == scaler
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

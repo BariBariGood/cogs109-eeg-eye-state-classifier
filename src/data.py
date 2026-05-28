@@ -132,7 +132,9 @@ def apply_scaler(
 
 
 def save_scaler(scaler: dict[str, dict[str, float]], path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(path, "w") as f:
         json.dump(scaler, f, indent=2, sort_keys=True)
 
