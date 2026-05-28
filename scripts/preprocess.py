@@ -31,6 +31,14 @@ PROCESSED_DIR = os.path.join(REPO_ROOT, "data", "processed")
 RAW_DIR = os.path.join(REPO_ROOT, "data", "raw")
 SEED = 42
 N_SPLITS = 5
+# 100 contiguous segments → ~119 samples (~0.93 s) each at 128 Hz. We
+# deliberately use a finer-grained M than the conservative default of 50:
+# every fold then receives 20 segments evenly distributed across the
+# class-1-proportion sort order, which keeps per-fold class balance within
+# ~3 percentage points of the overall ~54% class-0 balance and lets the
+# stratified scheme recover its expected ~15–25pp of accuracy that the
+# 5-macro-block naive scheme artificially destroyed.
+N_SEGMENTS_STRAT = 100
 TEST_FRAC = 0.20
 SEAM_GAP = 64
 
@@ -91,19 +99,31 @@ def main() -> int:
         scaler_b, os.path.join(PROCESSED_DIR, "scaler_shuffled.json")
     )
 
-    # CV folds over Split A's train partition (both schemes, frozen)
-    log.info("computing CV fold indices (blocked + shuffled, k=%d)", N_SPLITS)
+    # CV folds over Split A's train partition (all three schemes, frozen)
+    log.info(
+        "computing CV fold indices (blocked + shuffled + stratified_blocked, k=%d)",
+        N_SPLITS,
+    )
     n_train_a = len(train_a)
     blocked_folds = cv_mod.blocked_kfold_indices(n_train_a, n_splits=N_SPLITS)
     shuffled_folds = cv_mod.shuffled_kfold_indices(
         n_train_a, n_splits=N_SPLITS, seed=SEED
     )
+    y_train_a = train_a_z[data_mod.LABEL_COL].to_numpy().astype(int)
+    stratified_blocked_folds = cv_mod.stratified_blocked_kfold_indices(
+        y_train_a,
+        n_splits=N_SPLITS,
+        n_segments=N_SEGMENTS_STRAT,
+        seed=SEED,
+    )
     folds_payload = {
         "n_samples": int(n_train_a),
         "n_splits": int(N_SPLITS),
         "seed": int(SEED),
+        "n_segments_stratified": int(N_SEGMENTS_STRAT),
         "blocked": _folds_to_json(blocked_folds),
         "shuffled": _folds_to_json(shuffled_folds),
+        "stratified_blocked": _folds_to_json(stratified_blocked_folds),
     }
     with open(os.path.join(PROCESSED_DIR, "cv_folds.json"), "w") as f:
         json.dump(folds_payload, f)
