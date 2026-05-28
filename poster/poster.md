@@ -65,7 +65,7 @@ cross-validation is an artefact of temporal leakage?
 
 - **Models (COGS 109 palette):** LDA, KNN (k tuned), PCA→LDA, PCR as a
   binary classifier with a 0.5 threshold.
-- **Preprocessing:** drop 4 voltage outliers (>10 SD on any channel),
+- **Preprocessing:** drop 4 voltage outliers (>4 SD on any channel),
   z-score on the training set only, chronological 80/20 split with a
   64-sample seam gap between train and test.
 - **CV scheme A — shuffled 5-fold** (leaky baseline).

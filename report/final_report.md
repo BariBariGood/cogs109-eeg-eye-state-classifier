@@ -151,8 +151,8 @@ relationship between voltage and eye state.
 ### 3.1 Preprocessing
 
 Outliers in the raw signal — four samples with at least one channel
-exceeding 10 standard deviations above the channel mean — were removed
-prior to any further processing. This is a standard EEG-signal
+exceeding 4 standard deviations above the channel mean (z > 4) — were
+removed prior to any further processing. This is a standard EEG-signal
 hygiene step and accounts for occasional headset disconnections or
 muscle artefacts; an ablation reported in `tables/02_outlier_ablation.csv`
 shows it does not materially change downstream model accuracy but does

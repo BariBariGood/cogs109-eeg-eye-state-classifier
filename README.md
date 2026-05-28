@@ -64,7 +64,7 @@ with k=1) trivially recovers it from a shuffled training fold.
 The full methodology lives in
 [`report/final_report.md`](report/final_report.md). In short:
 
-1. **Preprocessing.** Drop 4 outlier samples (any channel > 10 SD
+1. **Preprocessing.** Drop 4 outlier samples (any channel > 4 SD
    above mean), chronologically split 80/20 train/test with a
    64-sample seam gap, z-score channels using train-only statistics.
 2. **Cross-validation schemes.** All k = 5:

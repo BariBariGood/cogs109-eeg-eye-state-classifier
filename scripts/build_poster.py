@@ -93,7 +93,7 @@ BACKGROUND_BULLETS = [
 METHODS_BULLETS = [
     "Models (COGS 109 palette): LDA, KNN (k tuned), PCA→LDA, PCR as binary "
     "classifier with a 0.5 threshold.",
-    "Preprocessing: drop 4 voltage outliers (>10 SD), z-score on train only, "
+    "Preprocessing: drop 4 voltage outliers (>4 SD on any channel), z-score on train only, "
     "chronological 80/20 split with a 64-sample seam gap between train and "
     "test.",
     "CV scheme A — shuffled 5-fold (leaky baseline).",
