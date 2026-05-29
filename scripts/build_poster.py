@@ -51,64 +51,67 @@ BLACK = RGBColor(0x10, 0x10, 0x10)
 LIGHT_BG = RGBColor(0xF7, 0xF7, 0xF7)
 PANEL_BG = RGBColor(0xFA, 0xFA, 0xFC)
 
-TITLE = "Classifying Eye State from EEG Signals: An Honest Cross-Validation Study"
+TITLE = "Classification of EEG Eye-State via KNN: A Cross-Validation Honesty Study"
 AUTHORS = (
-    "Ivan Del Rio  /  Arkon Damadugula      "
+    "Ivan Del Rio  /  Anish Kondamadugula      "
     "COGS 109  •  Mukamel  •  Spring 2026      "
     "University of California, San Diego"
 )
 HEADER_KICKER = "UC San Diego  •  Department of Cognitive Science"
 
 ABSTRACT = (
-    "We classify per-sample eye state (open vs. closed) from a single-subject "
-    "14-channel EEG recording (UCI #264, 14,980 samples) using only the methods "
-    "in the COGS 109 palette: LDA, KNN, PCA→LDA, and PCR-as-classifier. The "
-    "central contribution is methodological. Standard shuffled k-fold CV reports "
-    "97% accuracy for KNN, but the recording is a continuous time series with "
-    "lag-1 channel autocorrelation r ≈ 0.997 and only 24 contiguous label runs, "
-    "so shuffled folds leak neighbouring samples from train into test. We "
-    "compare three CV schemes — shuffled, naive blocked, and stratified blocked "
-    "— and show that the honest stratified blocked estimate of our best "
-    "classifier is 77.8% ± 2.7%, not 97%. The headline takeaway: roughly "
-    "twenty accuracy points reported in the literature on this dataset are "
-    "leakage, not signal."
+    "We pick classification as our data-analysis approach, K-nearest "
+    "neighbours (KNN) as our model, and a k-sweep minimising 5-fold CV "
+    "error as our model-selection procedure. We then run that same "
+    "procedure under three different CV schemes — shuffled, naive blocked, "
+    "and stratified blocked — on the UCI #264 EEG Eye State recording. "
+    "All three schemes pick k = 1, but the picked accuracies span 47 "
+    "percentage points: 97.3% ± 0.4% (shuffled, leaky), 50.0% ± 10.7% "
+    "(naive blocked), and 77.8% ± 2.7% (stratified blocked, honest). The "
+    "19.5 pp gap between the leaky and honest estimates is leakage "
+    "attributable to scheme choice on this autocorrelated single-subject "
+    "recording, not to model quality."
 )
 
 QUESTION = (
-    "Can raw 14-channel EEG voltages predict whether a person's eyes are open "
-    "or closed, and how much of the accuracy reported under shuffled "
-    "cross-validation is an artefact of temporal leakage?"
+    "Given an autocorrelated single-subject EEG recording and a KNN "
+    "classifier, how does the choice of cross-validation scheme change "
+    "the result of an otherwise-identical model-selection procedure?"
 )
 
 BACKGROUND_BULLETS = [
     "UCI EEG Eye State dataset (Roesler, 2013) — id #264.",
     "14,980 samples × 14 Emotiv channels (AF3, F7, F3, FC5, T7, P7, O1, O2, "
-    "P8, T8, FC6, F4, F8, AF4), sampled at 128 Hz over ~117 s.",
+    "P8, T8, FC6, F4, F8, AF4), sampled at ~128 Hz over ~117 s.",
     "Single subject, binary eyeDetection label, 55.12% open / 44.88% closed.",
     "Only 24 contiguous label runs in the whole recording.",
     "Channel autocorrelation at lag 1 ≈ 0.997 — adjacent samples are nearly "
-    "identical, so shuffled folds put near-duplicates in train and test.",
+    "identical, so any uniformly-random CV split puts near-duplicates into "
+    "both train and test.",
 ]
 
 METHODS_BULLETS = [
-    "Models (COGS 109 palette): LDA, KNN (k tuned), PCA→LDA, PCR as binary "
-    "classifier with a 0.5 threshold.",
-    "Preprocessing: drop 4 voltage outliers (>4 SD on any channel), z-score on train only, "
-    "chronological 80/20 split with a 64-sample seam gap between train and "
-    "test.",
+    "Approach: classification (binary eyeDetection target).",
+    "Model: K-nearest neighbours with Euclidean distance in z-scored 14-D "
+    "channel space. Chosen because KNN's per-sample similarity decision "
+    "rule is the COGS 109-palette model most sensitive to lag-1 "
+    "autocorrelation.",
+    "Model selection: sweep k over {1, 3, 5, 7, 11, 15, 21, 31, 51, 75, 99, "
+    "151, 201} (log-spaced); pick the k maximising mean 5-fold CV accuracy.",
     "CV scheme A — shuffled 5-fold (leaky baseline).",
     "CV scheme B — naive blocked 5-fold (5 contiguous time chunks).",
     "CV scheme C — stratified blocked 5-fold (100 short contiguous segments "
-    "redistributed across folds to balance class proportion).",
-    "Hyperparameters chosen by maximum mean blocked CV accuracy.",
+    "redistributed across folds to balance class proportion; honest).",
+    "Preprocessing: drop 4 voltage outliers (>4 SD on any channel), "
+    "chronological 80/20 split with a 64-sample seam gap, z-score on the "
+    "training partition only.",
 ]
 
 RESULTS_TABLE = [
-    ["Model", "Shuffled\n(leaky)", "Naive\nblocked", "Stratified\nblocked"],
-    ["LDA", "0.647 ± 0.006", "0.408 ± 0.122", "0.591 ± 0.047"],
-    ["KNN (k=1)", "0.973 ± 0.004", "0.500 ± 0.107", "0.778 ± 0.027"],
-    ["PCA→LDA (n=3)", "0.557 ± 0.015", "0.410 ± 0.083", "0.534 ± 0.044"],
-    ["PCR (n=2)", "0.553 ± 0.009", "0.408 ± 0.130", "0.525 ± 0.018"],
+    ["CV scheme", "Picked k", "Mean accuracy ± std"],
+    ["Shuffled (leaky)", "1", "0.9728 ± 0.0037"],
+    ["Naive blocked", "1", "0.5004 ± 0.1068"],
+    ["Stratified blocked (honest)", "1", "0.7778 ± 0.0274"],
 ]
 
 TAKEHOME_TOP = "Shuffled CV says we have a 97% classifier."
@@ -116,24 +119,28 @@ TAKEHOME_MID = "Honest stratified blocked CV says we have a 78% classifier."
 TAKEHOME_BOT = "The difference is leakage, not signal."
 
 CONCLUSION_BULLETS = [
-    "Best honest model: KNN (k=1) at 77.8% ± 2.7% stratified blocked CV — "
-    "well above the 55% majority baseline and the best accuracy any model in "
-    "the palette achieved under a temporally honest split.",
-    "Leakage gap (shuffled minus stratified blocked) averages ~13 pp across "
-    "models and reaches ~19.5 pp on KNN, which exploits lag-1 autocorrelation "
-    "almost perfectly when adjacent samples land in the same fold.",
-    "Pedagogical implication: published EEG eye-state results above 95% "
-    "almost certainly reflect shuffled-CV leakage rather than genuine "
-    "discrimination from the raw voltage vector alone.",
+    "(1) The same KNN-k-sweep model-selection procedure picks k = 1 under "
+    "all three CV schemes — but the accuracy at that k varies by 47 "
+    "percentage points (50.0% naive blocked → 97.3% shuffled).",
+    "(2) The honest accuracy at k = 1 (stratified blocked CV) is 77.8% ± "
+    "2.7% — well above the 55.12% majority-class baseline.",
+    "(3) The 19.5 pp gap between the leaky and honest estimates is leakage "
+    "attributable to scheme choice, not signal from a better model.",
+    "(4) Alternative classifiers (LDA / PCA→LDA / PCR) confirm KNN is "
+    "uniquely vulnerable — their leakage gaps are only 2–6 pp, as theory "
+    "predicts for classifiers that do not depend on per-sample similarity.",
 ]
 
-FUTURE_BULLETS = [
-    "Windowed features (rolling channel means/variances) to give models "
-    "temporal context without leakage.",
-    "Cross-subject generalisation — single-subject data tells us nothing about "
-    "inter-subject transfer.",
-    "Longer recordings with more label transitions per subject to make "
-    "blocked CV less brittle.",
+SUPPORTING_BULLETS = [
+    "We also evaluated three alternative classifiers (LDA, PCA→LDA, "
+    "PCR-as-classifier) as sanity checks, sweeping their hyperparameters "
+    "under the same three CV schemes.",
+    "LDA leakage gap (shuffled minus stratified blocked): +5.6 pp.",
+    "PCA→LDA (n=3) leakage gap: +2.4 pp.",
+    "PCR-as-classifier (n=2) leakage gap: +2.8 pp.",
+    "KNN's +19.5 pp gap is the outlier — consistent with KNN exploiting "
+    "per-sample similarity while LDA / PCA→LDA / PCR average over many "
+    "samples before deciding. See figure 14 + tables/03 for full numbers.",
 ]
 
 REFERENCES = [
@@ -141,14 +148,11 @@ REFERENCES = [
     "https://archive.ics.uci.edu/dataset/264/eeg+eye+state",
     "[2] Mukamel, R. (2026). COGS 109 — Modelling and Data Analysis "
     "Spring 2026 Study Guide. UC San Diego.",
-    "[3] Roy, Y., Banville, H., Albuquerque, I., et al. (2019). Deep "
-    "learning-based EEG analysis: a systematic review. J. Neural Eng. "
-    "16(5):051001.",
-    "[4] Schirrmeister, R. T., Springenberg, J. T., et al. (2017). Deep "
-    "learning with CNNs for EEG decoding and visualization. Hum. Brain Mapp. "
-    "38(11):5391–5420.",
-    "[5] James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). An "
+    "[3] James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). An "
     "Introduction to Statistical Learning, 2nd ed. Springer.",
+    "[4] Bergmeir, C., Benítez, J. M. (2012). On the use of "
+    "cross-validation for time series predictor evaluation. "
+    "Information Sciences 191:192–213.",
 ]
 
 
@@ -234,8 +238,8 @@ def _build_results_table(slide, x, y, w, h):
     rows, cols = len(RESULTS_TABLE), len(RESULTS_TABLE[0])
     tbl_shape = slide.shapes.add_table(rows, cols, x, y, w, h)
     tbl = tbl_shape.table
-    # Column widths
-    col_widths = [0.22, 0.26, 0.26, 0.26]
+    # Column widths: scheme name (wide) / picked k (narrow) / accuracy (wide).
+    col_widths = [0.46, 0.18, 0.36]
     for i, frac in enumerate(col_widths):
         tbl.columns[i].width = int(w * frac)
     # Style every cell
@@ -244,12 +248,12 @@ def _build_results_table(slide, x, y, w, h):
             cell = tbl.cell(r, c)
             cell.margin_left = Inches(0.08)
             cell.margin_right = Inches(0.08)
-            cell.margin_top = Inches(0.04)
-            cell.margin_bottom = Inches(0.04)
+            cell.margin_top = Inches(0.06)
+            cell.margin_bottom = Inches(0.06)
             cell.fill.solid()
             if r == 0:
                 cell.fill.fore_color.rgb = BAR_BLUE
-            elif RESULTS_TABLE[r][0] == "KNN (k=1)":
+            elif RESULTS_TABLE[r][0].startswith("Stratified blocked"):
                 cell.fill.fore_color.rgb = HIGHLIGHT_BG
             else:
                 cell.fill.fore_color.rgb = PANEL_BG
@@ -262,9 +266,12 @@ def _build_results_table(slide, x, y, w, h):
                 p.alignment = PP_ALIGN.CENTER if c > 0 else PP_ALIGN.LEFT
                 run = p.add_run()
                 run.text = line
-                run.font.size = Pt(16)
+                run.font.size = Pt(18)
                 run.font.name = "Calibri"
-                run.font.bold = (r == 0) or (c == 3 and r > 0)
+                # Bold the header row and the honest-row accuracy column.
+                run.font.bold = (r == 0) or (
+                    c == 2 and RESULTS_TABLE[r][0].startswith("Stratified blocked")
+                )
                 run.font.color.rgb = WHITE if r == 0 else BLACK
     return tbl_shape
 
@@ -451,10 +458,11 @@ def build_poster():
     head_fig_h = col_bottom - y
     _add_figure_with_caption(
         slide,
-        os.path.join(FIG_DIR, "14_cv_comparison_three_way.png"),
+        os.path.join(FIG_DIR, "11_knn_k_sweep.png"),
         col_x[1], y, col_w, head_fig_h - Inches(0.6),
-        "Fig. 2.  Three-way CV comparison — shuffled vs. naive blocked vs. "
-        "stratified blocked, across LDA / KNN / PCA→LDA / PCR.",
+        "Fig. 2.  KNN mean accuracy ± std-dev vs k (log scale) under three "
+        "CV schemes — all three schemes pick k = 1 but report accuracies "
+        "spanning 47 percentage points.",
     )
 
     # ----- RIGHT COLUMN -----
@@ -465,31 +473,34 @@ def build_poster():
     _build_results_table(slide, col_x[2], y, col_w, tbl_h)
     y += tbl_h + Inches(0.35)
 
-    cm_h = Inches(5.8)
+    # Supporting evidence panel: alternative classifiers (LDA / PCA->LDA /
+    # PCR) plus the secondary figure 14 (4-model 3-scheme bar chart) and
+    # figure 15 (holdout confusion matrices, interpret with care).
+    _section_header(slide, col_x[2], y, col_w, "SUPPORTING EVIDENCE")
+    y += Inches(0.85)
+    sup_text_h = Inches(3.6)
+    tb, tf = _add_text(slide, col_x[2], y, col_w, sup_text_h, fill=PANEL_BG,
+                       anchor=MSO_ANCHOR.TOP, margin=0.25)
+    _bullets(tf, SUPPORTING_BULLETS, size=16)
+    y += sup_text_h + Inches(0.2)
+
+    sup_fig_h = Inches(3.0)
     _add_figure_with_caption(
         slide,
-        os.path.join(FIG_DIR, "15_confusion_matrices.png"),
-        col_x[2], y, col_w, cm_h - Inches(0.6),
-        "Fig. 3.  Confusion matrices on holdout test (91% class-0 — "
-        "interpret with care).",
+        os.path.join(FIG_DIR, "14_cv_comparison_three_way.png"),
+        col_x[2], y, col_w, sup_fig_h - Inches(0.5),
+        "Fig. 3.  Supporting figure — three-way CV comparison across LDA "
+        "/ KNN / PCA→LDA / PCR. KNN bar group has the largest leakage gap.",
     )
-    y += cm_h + Inches(0.2)
+    y += sup_fig_h + Inches(0.2)
 
     _section_header(slide, col_x[2], y, col_w, "CONCLUSIONS")
     y += Inches(0.85)
-    conc_h = Inches(4.6)
+    conc_h = Inches(4.4)
     tb, tf = _add_text(slide, col_x[2], y, col_w, conc_h, fill=PANEL_BG,
                        anchor=MSO_ANCHOR.TOP, margin=0.25)
-    _bullets(tf, CONCLUSION_BULLETS, size=17)
+    _bullets(tf, CONCLUSION_BULLETS, size=15)
     y += conc_h + Inches(0.25)
-
-    _section_header(slide, col_x[2], y, col_w, "FUTURE WORK")
-    y += Inches(0.85)
-    fut_h = Inches(2.7)
-    tb, tf = _add_text(slide, col_x[2], y, col_w, fut_h, fill=PANEL_BG,
-                       anchor=MSO_ANCHOR.TOP, margin=0.25)
-    _bullets(tf, FUTURE_BULLETS, size=17)
-    y += fut_h + Inches(0.25)
 
     _section_header(slide, col_x[2], y, col_w, "REFERENCES")
     y += Inches(0.85)
@@ -627,10 +638,10 @@ def _pil_fallback_preview():
               fill=(201, 210, 230), font=_font(int(0.6 * scale)))
     # Title — wrap manually
     draw.text((px(1.4), px(1.4)),
-              "Classifying Eye State from EEG Signals:",
+              "Classification of EEG Eye-State via KNN:",
               fill=(255, 255, 255), font=_font_bold(int(1.3 * scale)))
     draw.text((px(1.4), px(2.5)),
-              "An Honest Cross-Validation Study",
+              "A Cross-Validation Honesty Study",
               fill=(255, 255, 255), font=_font_bold(int(1.3 * scale)))
     draw.text((px(1.4), px(3.95)),
               AUTHORS,
@@ -792,7 +803,7 @@ def _pil_fallback_preview():
     y += th_h + px(0.4)
 
     y = _section(1, y, "HEADLINE FIGURE")
-    head_fig_path = os.path.join(FIG_DIR, "14_cv_comparison_three_way.png")
+    head_fig_path = os.path.join(FIG_DIR, "11_knn_k_sweep.png")
     if os.path.exists(head_fig_path):
         fig = Image.open(head_fig_path).convert("RGB")
         target_w = col_w
@@ -807,7 +818,7 @@ def _pil_fallback_preview():
             img.paste(fig, (fx, y))
             cap_font = _font(int(0.4 * scale))
             draw.text((col_x[1] + px(0.1), y + target_h + px(0.1)),
-                      "Fig. 2. Three-way CV comparison.",
+                      "Fig. 2. KNN k-sweep under three CV schemes.",
                       fill=(60, 60, 60), font=cap_font)
 
     # ---- RIGHT COLUMN ----
@@ -818,7 +829,7 @@ def _pil_fallback_preview():
     cols = len(RESULTS_TABLE[0])
     tbl_h = px(3.4)
     row_h = tbl_h // rows
-    col_fracs = [0.22, 0.26, 0.26, 0.26]
+    col_fracs = [0.46, 0.18, 0.36]
     col_widths = [int(col_w * f) for f in col_fracs]
     table_font = _font_bold(int(0.45 * scale))
     table_font_b = _font(int(0.42 * scale))
@@ -830,10 +841,11 @@ def _pil_fallback_preview():
             x1 = cx + col_widths[c]
             y0 = y + r * row_h
             y1 = y + (r + 1) * row_h
+            is_honest = RESULTS_TABLE[r][0].startswith("Stratified blocked")
             if r == 0:
                 fill = (31, 61, 122)
                 fg = (255, 255, 255)
-            elif RESULTS_TABLE[r][0] == "KNN (k=1)":
+            elif is_honest:
                 fill = (245, 234, 200)
                 fg = (20, 20, 20)
             else:
@@ -842,62 +854,68 @@ def _pil_fallback_preview():
             draw.rectangle([x0, y0, x1, y1], fill=fill,
                            outline=(200, 200, 200))
             text = RESULTS_TABLE[r][c]
-            f = table_font if r == 0 else (table_font_hl if c == 3 and r > 0 else table_font_b)
+            if r == 0:
+                f = table_font
+            elif c == 2 and is_honest:
+                f = table_font_hl
+            else:
+                f = table_font_b
             text_lines = text.split("\n")
             total_h = int(0.55 * scale) * len(text_lines)
             line_y = y0 + (row_h - total_h) // 2
             for ln in text_lines:
                 tw = draw.textlength(ln, font=f)
-                tx = x0 + (col_widths[c] - tw) // 2 if c > 0 else x0 + px(0.1)
+                tx = x0 + (col_widths[c] - tw) // 2 if c > 0 else x0 + px(0.15)
                 draw.text((tx, line_y), ln, fill=fg, font=f)
                 line_y += int(0.55 * scale)
             cx = x1
     y += tbl_h + px(0.35)
 
-    cm_path = os.path.join(FIG_DIR, "15_confusion_matrices.png")
-    cm_h = px(6.0)
-    if os.path.exists(cm_path):
-        cm = Image.open(cm_path).convert("RGB")
+    y = _section(2, y, "SUPPORTING EVIDENCE")
+    sup_h = px(3.6)
+    _panel(2, y, sup_h)
+    sf = _font(int(0.4 * scale))
+    cy = y + px(0.2)
+    for item in SUPPORTING_BULLETS:
+        wrapped = _wrap_text("• " + item, sf, col_w - px(0.5))
+        for ln in wrapped:
+            draw.text((col_x[2] + px(0.25), cy), ln, fill=(20, 20, 20),
+                      font=sf)
+            cy += int(0.46 * scale)
+        cy += int(0.08 * scale)
+    y += sup_h + px(0.25)
+
+    aux_path = os.path.join(FIG_DIR, "14_cv_comparison_three_way.png")
+    aux_h = px(3.0)
+    if os.path.exists(aux_path):
+        aux = Image.open(aux_path).convert("RGB")
         target_w = col_w
-        target_h = int(cm.height * target_w / cm.width)
-        if target_h > cm_h - px(0.6):
-            target_h = cm_h - px(0.6)
-            target_w = int(cm.width * target_h / cm.height)
-        cm = cm.resize((target_w, target_h), Image.LANCZOS)
+        target_h = int(aux.height * target_w / aux.width)
+        if target_h > aux_h - px(0.5):
+            target_h = aux_h - px(0.5)
+            target_w = int(aux.width * target_h / aux.height)
+        aux = aux.resize((target_w, target_h), Image.LANCZOS)
         fx = col_x[2] + (col_w - target_w) // 2
-        img.paste(cm, (fx, y))
-        cap_font = _font(int(0.4 * scale))
-        draw.text((col_x[2] + px(0.1), y + target_h + px(0.1)),
-                  "Fig. 3. Confusion matrices on holdout.",
+        img.paste(aux, (fx, y))
+        cap_font = _font(int(0.36 * scale))
+        draw.text((col_x[2] + px(0.1), y + target_h + px(0.05)),
+                  "Fig. 3. Supporting — three-way CV across 4 classifiers.",
                   fill=(60, 60, 60), font=cap_font)
-    y += cm_h + px(0.2)
+    y += aux_h + px(0.2)
 
     y = _section(2, y, "CONCLUSIONS")
-    conc_h = px(5.2)
+    conc_h = px(5.0)
     _panel(2, y, conc_h)
-    cf = _font(int(0.42 * scale))
-    cy = y + px(0.25)
+    cf = _font(int(0.38 * scale))
+    cy = y + px(0.2)
     for item in CONCLUSION_BULLETS:
         wrapped = _wrap_text("• " + item, cf, col_w - px(0.5))
         for ln in wrapped:
             draw.text((col_x[2] + px(0.25), cy), ln, fill=(20, 20, 20),
                       font=cf)
-            cy += int(0.5 * scale)
-        cy += int(0.1 * scale)
+            cy += int(0.46 * scale)
+        cy += int(0.08 * scale)
     y += conc_h + px(0.3)
-
-    y = _section(2, y, "FUTURE WORK")
-    fut_h = px(3.0)
-    _panel(2, y, fut_h)
-    cy = y + px(0.25)
-    for item in FUTURE_BULLETS:
-        wrapped = _wrap_text("• " + item, cf, col_w - px(0.5))
-        for ln in wrapped:
-            draw.text((col_x[2] + px(0.25), cy), ln, fill=(20, 20, 20),
-                      font=cf)
-            cy += int(0.5 * scale)
-        cy += int(0.1 * scale)
-    y += fut_h + px(0.3)
 
     y = _section(2, y, "REFERENCES")
     ref_h = (H - px(1.4)) - y

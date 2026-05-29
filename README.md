@@ -2,38 +2,51 @@
 
 > COGS 109 (Spring 2026) final project — UC San Diego — Mukamel.
 > Authors: **Ivan Del Rio** ([@BariBariGood](https://github.com/BariBariGood))
-> and **Arkon Damadugula** ([@arkondamadugula](https://github.com/arkondamadugula)).
+> and **Anish Kondamadugula** ([@arkondamadugula](https://github.com/arkondamadugula)).
 
-A small, reproducible project that classifies whether a subject's eyes
-are open or closed from a 14-channel EEG recording — using **only** the
-methods covered in the COGS 109 SP26 syllabus — and uses the dataset to
-demonstrate how badly shuffled cross-validation can mislead an
-unsuspecting analyst on autocorrelated time-series data. The headline
-result is that our best honest classifier achieves **77.8% ± 2.7%**
-stratified blocked CV accuracy, compared to the **97%** that the same
-classifier reports under a leaky shuffled-CV protocol.
+A small, reproducible project that picks **Classification** as the data
+analysis approach, **K-Nearest Neighbors (KNN)** as the model, and a
+**hyperparameter sweep over `k` minimising 5-fold cross-validation
+error** as the model selection procedure — and then runs that *same*
+procedure under three different CV schemes (shuffled, naive blocked,
+stratified blocked) to show how much the scheme choice changes the
+answer on autocorrelated EEG data.
+
+The headline number is that the picked model, **KNN with k = 1**,
+reports **77.8% ± 2.7%** accuracy under the honest stratified blocked
+CV scheme — well above the 55.12% majority-class baseline — but the
+*same* `k = 1` reports **97.3% ± 0.4%** under leaky shuffled CV. The
+**19.5 percentage-point gap** is leakage attributable to scheme choice,
+not model quality.
 
 The full paper-style writeup lives at [`report/final_report.md`](report/final_report.md);
 the academic poster lives at [`poster/poster.pptx`](poster/poster.pptx) with a
 [PNG preview](poster/poster_preview.png).
 
+## Executive summary
+
+> **Shuffled CV says we have a 97% classifier. Honest stratified blocked CV says we have a 78% classifier. The difference is leakage, not signal.**
+
 ## Hypothesis & contribution
 
-**Hypothesis.** A linear or nearest-neighbour classifier trained on raw
+**Hypothesis.** A K-Nearest Neighbors classifier trained on raw
 14-channel EEG voltages can predict per-sample eye state above the
-majority-class baseline of 55.12%, but accuracy estimates obtained
-under shuffled k-fold cross-validation will substantially exceed honest
+55.12% majority-class baseline, but accuracy estimates obtained under
+shuffled k-fold cross-validation will substantially exceed honest
 out-of-time estimates because of temporal leakage between adjacent
 samples.
 
 **Contribution.** The contribution of this project is *methodological*
-rather than predictive. We provide a worked, fully reproducible
-comparison between three k=5 cross-validation schemes — shuffled, naive
-blocked, and stratified blocked — on the UCI #264 EEG Eye State dataset,
-using only the four-model COGS 109 palette (LDA, KNN, PCA→LDA, PCR as a
-binary classifier). We publish both the leaky and the honest accuracy
-numbers side by side so future students of this dataset can calibrate
-their expectations against a reference.
+rather than predictive. We perform the same KNN-k-sweep model selection
+procedure (sweep `k` over a log-spaced grid; pick the `k` that minimises
+mean 5-fold CV error) under three different CV schemes — shuffled,
+naive blocked, and stratified blocked — on the UCI #264 EEG Eye State
+dataset, and document how the picked `k` and the picked accuracy change
+between schemes. We then provide a small sanity-check appendix that
+runs the same model selection idea over three alternative classifiers
+(LDA, PCA→LDA, PCR-as-classifier) to confirm that the leakage problem
+is specifically a KNN problem on this dataset and not a generic
+modelling failure.
 
 ## Dataset
 
@@ -56,8 +69,8 @@ wearing an Emotiv EPOC consumer-grade EEG headset.
 
 That last point is the structural reason shuffled CV leaks on this
 dataset: the nearest sample in time is almost always in the same class,
-so any classifier that exploits sample-to-sample similarity (e.g. KNN
-with k=1) trivially recovers it from a shuffled training fold.
+so a classifier that exploits sample-to-sample similarity (KNN at
+small `k`) trivially recovers it from a shuffled training fold.
 
 ## Methodology (short version)
 
@@ -67,44 +80,74 @@ The full methodology lives in
 1. **Preprocessing.** Drop 4 outlier samples (any channel > 4 SD
    above mean), chronologically split 80/20 train/test with a
    64-sample seam gap, z-score channels using train-only statistics.
-2. **Cross-validation schemes.** All k = 5:
+2. **Approach.** Classification (binary eye-state label).
+3. **Model.** K-Nearest Neighbors. KNN is the simplest non-parametric
+   classifier in the COGS 109 palette, makes no distributional
+   assumption, and — because it predicts from per-sample similarity —
+   naturally exposes the lag-1 EEG autocorrelation that drives the
+   leakage gap we are studying.
+4. **Model selection procedure.** Sweep `k ∈ {1, 3, 5, 7, 11, 15, 21,
+   31, 51, 75, 99, 151, 201}` (log-spaced). For each `k` and each CV
+   scheme, compute mean 5-fold CV accuracy ± std-dev. The picked `k`
+   for a scheme is the argmin of mean CV error (equivalently argmax
+   of mean CV accuracy).
+5. **Three CV schemes evaluated**, all `k = 5`:
    - **shuffled** — uniform-random split (leaky baseline);
    - **naive blocked** — 5 contiguous time chunks (leakage-resistant
-     but class-imbalanced per fold);
+     but class-imbalanced per fold on this single-subject recording);
    - **stratified blocked** — 100 short contiguous segments
      redistributed across folds to balance class proportion.
-3. **Models** (COGS 109 palette only): LDA, KNN (k tuned), PCA → LDA
-   (n tuned), PCR thresholded at 0.5 (n tuned). All hyperparameters
-   selected by maximum mean **stratified blocked** CV accuracy.
-4. **Evaluation.** For each model × scheme combination we report mean
-   accuracy ± std-dev across folds; we also fit the four final models
-   on the full training set and report confusion matrices on the
-   chronological holdout.
+6. **Headline result.** Figure 11 (`figures/11_knn_k_sweep.png`) shows
+   accuracy vs `k` under each scheme. Shuffled picks `k = 1` at 97.3%,
+   naive blocked picks `k = 1` at 50.0%, and stratified blocked picks
+   `k = 1` at 77.8%. The same procedure, the same model, the same
+   data — three different answers.
+7. **Sanity-check appendix.** We also ran the same per-model
+   hyperparameter sweep on three alternative classifiers from the
+   COGS 109 palette — LDA (no tuning), PCA→LDA (sweep `n_components`),
+   and PCR-as-classifier (sweep `n_components`) — and report their
+   leakage gaps as supporting evidence. Their results are summarised
+   in figure 14 and detailed in the modelling notebook.
 
-No spectral / FFT features, no deep models, no off-syllabus methods.
+No spectral / FFT features, no logistic regression, no SVM, no decision
+trees, no neural networks — only the COGS 109 study-guide methods.
 
 ## Headline results
 
-| Model | Shuffled (leaky) | Naive blocked | **Stratified blocked (honest)** | Recovered | Residual leakage |
-|---|---|---|---|---|---|
-| LDA | 0.6471 ± 0.0063 | 0.4076 ± 0.1223 | **0.5911 ± 0.0474** | +18.4 pp | +5.6 pp |
-| KNN (k=1) | 0.9728 ± 0.0037 | 0.5004 ± 0.1068 | **0.7778 ± 0.0274** | +27.7 pp | +19.5 pp |
-| PCA→LDA (n=3) | 0.5574 ± 0.0147 | 0.4104 ± 0.0827 | **0.5339 ± 0.0438** | +12.4 pp | +2.4 pp |
-| PCR (n=2) | 0.5528 ± 0.0087 | 0.4079 ± 0.1301 | **0.5250 ± 0.0176** | +11.7 pp | +2.8 pp |
+KNN model selection under three CV schemes (5-fold each, log-spaced
+`k` grid; per-scheme picked `k` shown):
 
-> **Best honest model: KNN (k=1) at 77.8% ± 2.7%** stratified blocked CV.
-> Same model under shuffled CV: 97.3% ± 0.4%. The 19.5 percentage-point
-> gap is, we argue, mostly leakage.
+| CV scheme | Picked `k` | Mean accuracy ± std |
+|---|---|---|
+| Shuffled (leaky baseline) | 1 | 0.9728 ± 0.0037 (≈ 97.3% ± 0.4%) |
+| Naive blocked | 1 | 0.5004 ± 0.1068 (≈ 50.0% ± 10.7%) |
+| Stratified blocked (honest) | 1 | **0.7778 ± 0.0274 (≈ 77.8% ± 2.7%)** |
 
-Full numeric source: [`tables/03_cv_accuracy_comparison.csv`](tables/03_cv_accuracy_comparison.csv).
+> **Shuffled CV says we have a 97% classifier. Honest stratified blocked CV says we have a 78% classifier. The difference is leakage, not signal.**
+
+The 19.5 percentage-point gap between the leaky shuffled estimate
+(97.3%) and the honest stratified blocked estimate (77.8%) is the
+**leakage attributable to scheme choice**, not to model quality —
+exactly the same KNN, exactly the same training partition, exactly the
+same `k`, only the cross-validation rule changes.
 
 Headline figure:
 
-![Three-way CV comparison](figures/14_cv_comparison_three_way.png)
+![KNN model selection under three CV schemes](figures/11_knn_k_sweep.png)
 
-The leakage gap is largest for KNN, which directly exploits
-sample-to-sample similarity, and much smaller (2–6 pp) for LDA, PCA→LDA,
-and PCR, which average over many samples before deciding.
+**Supporting evidence from alternative classifiers.** As a sanity
+check we also ran a hyperparameter sweep on three other models from
+the COGS 109 palette — LDA, PCA→LDA (sweep `n_components`), and
+PCR-as-classifier (sweep `n_components`) — under all three CV schemes.
+The leakage gaps (shuffled minus stratified blocked) for the picked
+hyperparameter were **+5.6 pp for LDA**, **+2.4 pp for PCA→LDA**, and
+**+2.8 pp for PCR-as-classifier**, compared to KNN's **+19.5 pp** gap.
+This is consistent with KNN being uniquely vulnerable to lag-1
+autocorrelation leakage because it relies on *per-sample* similarity,
+while LDA / PCA→LDA / PCR average over many samples before deciding.
+The full alternative-classifier numbers live in
+[`figures/14_cv_comparison_three_way.png`](figures/14_cv_comparison_three_way.png)
+and [`tables/03_cv_accuracy_comparison.csv`](tables/03_cv_accuracy_comparison.csv).
 
 ## Repository layout
 
@@ -114,11 +157,11 @@ and PCR, which average over many samples before deciding.
 │   ├── raw/                       # raw CSV pulled from UCI + manifest
 │   └── processed/                 # outlier-cleaned, z-scored splits + CV folds
 ├── figures/                       # 15 committed PNG figures (EDA + modelling)
-├── tables/                        # 3 committed CSV summary tables
+├── tables/                        # CSV summary tables (incl. k-sweep + 3-way CV)
 ├── notebooks/
 │   ├── 00_fetch_data.ipynb        # downloads UCI #264, writes idempotent manifest
 │   ├── 01_eda.ipynb               # exploratory analysis (11 figures, 2 tables)
-│   └── 02_modeling.ipynb          # models + 3-way CV comparison + figures 11-15
+│   └── 02_modeling.ipynb          # KNN k-sweep + 3-way CV + alt-classifier appendix
 ├── poster/
 │   ├── poster.pptx                # 48"×36" final poster (source of truth)
 │   ├── poster.md                  # paste-ready Markdown version
@@ -128,6 +171,7 @@ and PCR, which average over many samples before deciding.
 │   └── final_report.md            # paper-style writeup (~4000 words)
 ├── scripts/
 │   ├── preprocess.py              # full preprocessing CLI (idempotent)
+│   ├── regenerate_figure_11.py    # standalone KNN k-sweep figure (3 CV schemes)
 │   └── build_poster.py            # python-pptx builder for the poster (idempotent)
 ├── src/
 │   ├── data.py                    # loaders, cleaner, splitters, scaler
@@ -157,6 +201,13 @@ make data        # fetch + preprocess (idempotent — won't re-download if up to
 make modeling    # execute the modelling notebook (writes figures 11-15)
 make poster      # regenerate poster/poster.pptx + poster/poster_preview.png
 pytest tests/    # 18 tests, < 2 min
+```
+
+To regenerate the headline figure on its own without re-running the
+full modelling notebook:
+
+```bash
+python scripts/regenerate_figure_11.py
 ```
 
 Or all-at-once: `make all` → `data` + `figures` + `modeling`, then
@@ -189,7 +240,7 @@ raw data has actually changed.
 |-----------------------------------|-----------------------------------------------------------------------------|
 | `notebooks/00_fetch_data.ipynb`   | downloads UCI #264 via `ucimlrepo`, writes raw CSV + SHA-256 manifest        |
 | `notebooks/01_eda.ipynb`          | exploratory analysis — class balance, channel distributions, autocorrelation |
-| `notebooks/02_modeling.ipynb`     | LDA / KNN / PCA→LDA / PCR models + 3-way CV comparison + holdout confusions  |
+| `notebooks/02_modeling.ipynb`     | KNN k-sweep + 3-way CV comparison + alternative-classifier appendix          |
 
 ### Figures (`figures/`)
 
@@ -207,10 +258,10 @@ raw data has actually changed.
 | `08_label_autocorrelation.png`          | label autocorrelation across lags — motivates blocked CV |
 | `09_pca_scatter.png`                    | first two principal components, coloured by label |
 | `10_lda_coefficients.png`               | LDA discriminant coefficients per channel |
-| `11_knn_k_sweep.png`                    | KNN accuracy vs. k under stratified blocked CV |
-| `12_pca_lda_components_sweep.png`       | PCA→LDA accuracy vs. number of components |
-| `13_pcr_components_sweep.png`           | PCR accuracy vs. number of components |
-| `14_cv_comparison_three_way.png`        | **headline figure** — 4 models × 3 CV schemes grouped bar chart |
+| `11_knn_k_sweep.png`                    | **headline figure** — KNN k-sweep under 3 CV schemes |
+| `12_pca_lda_components_sweep.png`       | PCA→LDA accuracy vs. number of components (alt-classifier) |
+| `13_pcr_components_sweep.png`           | PCR accuracy vs. number of components (alt-classifier) |
+| `14_cv_comparison_three_way.png`        | supporting figure — 4 models × 3 CV schemes grouped bar chart |
 | `15_confusion_matrices.png`             | per-model holdout confusion matrices |
 
 ### Tables (`tables/`)
@@ -219,12 +270,13 @@ raw data has actually changed.
 |---|---|
 | `01_summary_stats.csv`         | per-channel mean / std / min / max (raw and cleaned) |
 | `02_outlier_ablation.csv`      | summary stats before vs. after outlier removal |
-| `03_cv_accuracy_comparison.csv`| headline 4-model × 3-scheme accuracy table |
+| `03_cv_accuracy_comparison.csv`| 4-model × 3-scheme accuracy table (alt-classifier reference) |
+| `04_knn_k_sweep.csv`           | KNN accuracy ± std for every `k` under every CV scheme |
 
 ## Authors
 
 - **Ivan Del Rio** — [@BariBariGood](https://github.com/BariBariGood)
-- **Arkon Damadugula** — [@arkondamadugula](https://github.com/arkondamadugula)
+- **Anish Kondamadugula** — [@arkondamadugula](https://github.com/arkondamadugula)
 
 UC San Diego, COGS 109 — Modelling and Data Analysis, Spring 2026
 (Mukamel).
@@ -239,14 +291,8 @@ MIT — see [LICENSE](LICENSE).
    <https://archive.ics.uci.edu/dataset/264/eeg+eye+state>
 2. Mukamel, R. (2026). *COGS 109 — Modelling and Data Analysis Spring
    2026 Study Guide*. UC San Diego.
-3. Roy, Y., Banville, H., Albuquerque, I., et al. (2019). Deep
-   learning-based EEG analysis: a systematic review. *J. Neural Eng.*
-   16(5):051001.
-4. Schirrmeister, R. T., Springenberg, J. T., et al. (2017). Deep
-   learning with CNNs for EEG decoding and visualization. *Hum. Brain
-   Mapp.* 38(11):5391–5420.
-5. James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). *An
+3. James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). *An
    Introduction to Statistical Learning*, 2nd ed. Springer.
-6. Bergmeir, C., Benítez, J. M. (2012). On the use of cross-validation
+4. Bergmeir, C., Benítez, J. M. (2012). On the use of cross-validation
    for time series predictor evaluation. *Information Sciences*
    191:192–213.
