@@ -14,7 +14,7 @@ The source-of-truth artifact is `poster.pptx` — regenerate from
 
 > **Classifying Eye State from EEG Signals: An Honest Cross-Validation Study**
 >
-> Ivan Del Rio • Arkon Damadugula
+> Ivan Del Rio • Anish Kondamadugula
 > COGS 109 — Mukamel — Spring 2026
 > University of California, San Diego
 

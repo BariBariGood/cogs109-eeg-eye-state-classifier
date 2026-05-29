@@ -1,6 +1,6 @@
 # Classifying Eye State from EEG Signals: An Honest Cross-Validation Study
 
-**Ivan Del Rio** &nbsp;·&nbsp; **Arkon Damadugula**
+**Ivan Del Rio** &nbsp;·&nbsp; **Anish Kondamadugula**
 COGS 109 — Modelling and Data Analysis &nbsp;·&nbsp; Mukamel &nbsp;·&nbsp; Spring 2026
 University of California, San Diego
 

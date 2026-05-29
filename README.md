@@ -2,7 +2,7 @@
 
 > COGS 109 (Spring 2026) final project — UC San Diego — Mukamel.
 > Authors: **Ivan Del Rio** ([@BariBariGood](https://github.com/BariBariGood))
-> and **Arkon Damadugula** ([@arkondamadugula](https://github.com/arkondamadugula)).
+> and **Anish Kondamadugula** ([@arkondamadugula](https://github.com/arkondamadugula)).
 
 A small, reproducible project that classifies whether a subject's eyes
 are open or closed from a 14-channel EEG recording — using **only** the
@@ -224,7 +224,7 @@ raw data has actually changed.
 ## Authors
 
 - **Ivan Del Rio** — [@BariBariGood](https://github.com/BariBariGood)
-- **Arkon Damadugula** — [@arkondamadugula](https://github.com/arkondamadugula)
+- **Anish Kondamadugula** — [@arkondamadugula](https://github.com/arkondamadugula)
 
 UC San Diego, COGS 109 — Modelling and Data Analysis, Spring 2026
 (Mukamel).
