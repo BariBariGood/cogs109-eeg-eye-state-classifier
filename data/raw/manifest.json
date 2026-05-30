@@ -1,0 +1,29 @@
+{
+  "channels": [
+    "AF3",
+    "F7",
+    "F3",
+    "FC5",
+    "T7",
+    "P7",
+    "O1",
+    "O2",
+    "P8",
+    "T8",
+    "FC6",
+    "F4",
+    "F8",
+    "AF4"
+  ],
+  "class_counts": {
+    "0": 8257,
+    "1": 6723
+  },
+  "downloaded_at": "2026-05-28T08:12:46.767834+00:00",
+  "label_column": "eyeDetection",
+  "last_preprocessed_at": "2026-05-28T17:51:55.871015+00:00",
+  "n_cols": 15,
+  "n_rows": 14980,
+  "sha256": "b8f42456e5c0c3b7d9744fd9e1fbae3aa542eaaf3eec7b3ebd5abdb89da1a7b8",
+  "source_url": "https://archive.ics.uci.edu/static/public/264/eeg+eye+state.zip"
+}
