@@ -1,0 +1,4 @@
+strategy,n_rows_kept,avg_abs_mean_shift_uV,avg_abs_std_shift_uV,recommended,justification
+drop,14976,14.842198577543416,1743.0193796392825,True,drop is preferred: only 4 rows (0.027%) are removed and the per-channel mean/std stay closest to the bulk-data values.
+winsorize,14980,14.873871276940788,1743.4836940753526,False,winsorize at empirical 0.5/99.5% deforms many in-distribution samples to make outliers benign; over-corrects.
+clip,14980,14.299845632745278,1687.811957093565,False,"clip at z=4 also alters non-outlier rows because z is computed under the outlier-inflated std, biasing the threshold."
