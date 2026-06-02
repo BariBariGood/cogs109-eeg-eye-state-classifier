@@ -19,9 +19,8 @@ CV scheme — well above the 55.12% majority-class baseline — but the
 **19.5 percentage-point gap** is leakage attributable to scheme choice,
 not model quality.
 
-The full paper-style writeup lives at [`report/final_report.md`](report/final_report.md);
-the academic poster lives at [`poster/poster.pptx`](poster/poster.pptx) with a
-[PNG preview](poster/poster_preview.png).
+The full paper-style writeup lives at [`report/final_report.md`](report/final_report.md)
+and the academic poster lives at [`poster/poster.pptx`](poster/poster.pptx).
 
 ## Executive summary
 
@@ -164,8 +163,6 @@ and [`tables/03_cv_accuracy_comparison.csv`](tables/03_cv_accuracy_comparison.cs
 │   └── 02_modeling.ipynb          # KNN k-sweep + 3-way CV + alt-classifier appendix
 ├── poster/
 │   ├── poster.pptx                # 48"×36" final poster (source of truth)
-│   ├── poster.md                  # paste-ready Markdown version
-│   ├── poster_preview.png         # rendered preview
 │   └── README.md                  # poster-specific notes
 ├── report/
 │   └── final_report.md            # paper-style writeup (~4000 words)
@@ -199,7 +196,7 @@ pip install -r requirements.txt
 
 make data        # fetch + preprocess (idempotent — won't re-download if up to date)
 make modeling    # execute the modelling notebook (writes figures 11-15)
-make poster      # regenerate poster/poster.pptx + poster/poster_preview.png
+make poster      # regenerate poster/poster.pptx
 pytest tests/    # 18 tests, < 2 min
 ```
 
@@ -221,7 +218,7 @@ Individual Makefile targets:
 | `make data`     | run `scripts/preprocess.py` (cleans + splits + scales)    |
 | `make figures`  | run `notebooks/01_eda.ipynb` (writes figures 01–10)       |
 | `make modeling` | run `notebooks/02_modeling.ipynb` (writes figures 11–15)  |
-| `make poster`   | run `scripts/build_poster.py` (writes `poster/poster.*`)  |
+| `make poster`   | run `scripts/build_poster.py` (writes `poster/poster.pptx`)|
 | `make test`     | run pytest                                                |
 | `make all`      | `data` + `figures` + `modeling`                           |
 | `make clean`    | remove regeneratable outputs                              |

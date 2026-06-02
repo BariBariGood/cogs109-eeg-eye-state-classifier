@@ -34,3 +34,6 @@ Thumbs.db
 
 # Executed-notebook artifacts (we commit canonical .ipynb only)
 *.executed.ipynb
+
+# Local-only poster preview (regenerated on demand by scripts/build_poster.py)
+poster/poster_preview.png

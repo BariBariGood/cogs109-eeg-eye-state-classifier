@@ -1,4 +1,4 @@
-.PHONY: all data figures clean test fetch eda modeling poster variants
+.PHONY: all data figures clean test fetch eda modeling poster
 
 all: data figures modeling
 
@@ -21,11 +21,8 @@ modeling: data
 poster:
 	python scripts/build_poster.py
 
-variants:
-	python -m scripts.variants.build_all
-
 test:
 	pytest tests/
 
 clean:
-	rm -rf data/processed/ figures/*.png tables/*.csv poster/poster.pptx poster/poster_preview.png poster/variants/*.pptx poster/variants/*.png
+	rm -rf data/processed/ figures/*.png tables/*.csv poster/poster.pptx
