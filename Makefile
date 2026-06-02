@@ -25,4 +25,4 @@ test:
 	pytest tests/
 
 clean:
-	rm -rf data/processed/ figures/*.png tables/*.csv poster/poster.pptx
+	rm -rf data/processed/ figures/*.png tables/*.csv poster/poster.pptx poster/poster_preview.png
