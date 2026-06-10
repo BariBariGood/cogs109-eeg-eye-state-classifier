@@ -112,7 +112,8 @@ def stratified_blocked_kfold_indices(
     * Each fold's class balance is close to the overall class balance,
       which avoids the failure mode of naive ``blocked_kfold_indices`` on
       this single-subject recording (folds 3/4 land on segments with 20% /
-      66% class-0 vs ~54% overall and the classifier cannot generalise).
+      66% class-0 vs the partition's ~46.5% class-0 and the classifier
+      cannot generalise).
 
     Parameters
     ----------
