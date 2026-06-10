@@ -8,8 +8,8 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[margin=0.85in]{geometry}
-\setlength{\parskip}{1pt}
+\usepackage[margin=0.8in]{geometry}
+\setlength{\parskip}{0.5pt}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
@@ -20,8 +20,8 @@
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
 \usepackage[compact]{titlesec}
-\titlespacing*{\section}{0pt}{6pt}{3pt}
-\titlespacing*{\subsection}{0pt}{5pt}{2pt}
+\titlespacing*{\section}{0pt}{5pt}{2pt}
+\titlespacing*{\subsection}{0pt}{4pt}{1pt}
 
 \graphicspath{{../figures/}{figures/}}
 
@@ -91,16 +91,21 @@ Electroencephalography (EEG) eye-state classification---deciding from raw
 scalp voltages whether a subject's eyes are open or closed---is a building
 block of brain--computer interfaces, drowsiness detection, and
 attention-monitoring systems. The UCI~\#264 EEG Eye State dataset is one
-of the most widely used benchmarks for this task, and online tutorials and
-student write-ups routinely report $k$-nearest-neighbour accuracies in the
-$95$--$98\%$ range on it under standard shuffled $k$-fold cross-validation.
+of the most widely used benchmarks for this task. The dataset's originators
+report a best error of $2.7\%$ ($\approx 97.3\%$ accuracy) using the
+instance-based KStar classifier under Weka's default (shuffled) 10-fold
+cross-validation, while non-instance-based methods score far worse (Roesler
+\& Suendermann, 2013); online tutorials and student write-ups likewise
+routinely report $k$-nearest-neighbour accuracies in the $95$--$98\%$ range
+under standard shuffled $k$-fold cross-validation.
 
 We argue in this report that those numbers reflect a \emph{methodological
 artefact} rather than a strong classifier. The dataset is a single
 $\sim$117-second continuous recording from one subject; its label changes
-only $23$ times across $14{,}980$ samples; adjacent samples are nearly
-identical (lag-1 channel correlation $\approx 0.997$); and the label is
-piecewise-constant over runs that are sometimes thousands of samples long.
+only $23$ times across $14{,}980$ samples; adjacent voltage samples are
+nearly identical (per-channel lag-1 autocorrelation $\approx 0.97$); and the
+label is piecewise-constant over runs that are sometimes thousands of
+samples long (lag-1 \emph{label} autocorrelation $\approx 0.997$).
 A \knn{} classifier with $k=1$ evaluated under shuffled $k$-fold CV is
 essentially asking ``what was the eye state of the sample $8$~ms before or
 after this one?''---a question to which it can almost always answer
@@ -155,19 +160,21 @@ labels change rarely: the recording contains only \textbf{24 contiguous
 label runs} (the subject opens or closes their eyes only $23$ times in
 $\sim$117\,s), with run lengths ranging from under a hundred to several
 thousand consecutive samples (Figure~\ref{fig:timeseries}). Consequently
-the lag-1 autocorrelation of any single voltage channel is
-$\approx 0.997$---adjacent samples are nearly identical---and the label,
-being piecewise-constant over long runs, has very high short-lag
-autocorrelation: $\approx 1.0$ at lag~1, $\approx 0.83$ at lag~50
+the lag-1 autocorrelation of a single voltage channel is high
+($\approx 0.97$ on average, ranging $0.91$--$0.99$ across the 14 channels
+after outlier removal)---adjacent samples are nearly identical---and the
+label, being piecewise-constant over long runs, is even more persistent:
+its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.83$ at lag~50
 ($\approx 0.4$\,s), crossing zero only at very long lags
 (Figure~\ref{fig:autocorr}).
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.66\linewidth]{04_timeseries_with_label.png}
+  \includegraphics[width=0.6\linewidth]{04_timeseries_with_label.png}
   \caption{Raw 14-channel EEG voltages (top) with the eye-state label strip
-  (bottom). Channels are continuous and smooth on the millisecond scale; the
-  label is piecewise-constant over multi-second runs.}
+  (bottom; blue $=$ eyes open, $0$; red $=$ eyes closed, $1$). Channels are
+  continuous and smooth on the millisecond scale; the label is
+  piecewise-constant over multi-second runs.}
   \label{fig:timeseries}
 \end{figure}
 
@@ -210,7 +217,7 @@ find.
 
 \subsection{Approach: classification (prediction)}
 
-The COGS~109 study guide enumerates several broad approaches (linear,
+The COGS~109 study guide (Mukamel, 2026) enumerates several broad approaches (linear,
 polynomial and spline regression, PCR, LDA, KNN, $K$-means, hierarchical
 clustering, PCA). The target variable here is the binary
 \texttt{eyeDetection} label, so \textbf{classification} is the natural
@@ -224,13 +231,14 @@ how honestly we can \emph{estimate} that predictive accuracy.
 
 \subsection{Model: $k$-nearest neighbours}
 
-Within classification we chose \knn{} as our model. \knn{} assigns a test
-sample the majority label among its $k$ nearest training samples under
-Euclidean distance in the $z$-scored 14-D channel space. We chose it for
+Within classification we chose \knn{} as our model (implemented with
+scikit-learn; Pedregosa et al., 2011). \knn{} assigns a test sample the
+majority label among its $k$ nearest training samples under Euclidean
+distance in the $z$-scored 14-D channel space. We chose it for
 three reasons. First, it is the simplest non-parametric classifier in the
 palette: it makes no distributional assumption and has exactly one
-hyperparameter ($k$) controlling the bias--variance trade-off, making it
-ideal for a clean single-axis hyperparameter sweep. Second---and most
+hyperparameter ($k$) controlling the bias--variance trade-off (James et al.,
+2021), making it ideal for a clean single-axis hyperparameter sweep. Second---and most
 importantly for this study---because \knn{} predicts from per-sample
 similarity to the training set, it is the model in the palette that
 \emph{most directly} exploits the lag-1 autocorrelation of EEG data; if we
@@ -280,6 +288,16 @@ $k$} under a scheme is the argmax of mean CV accuracy. Crucially, the
 selection \emph{rule} (argmax accuracy) is identical across schemes---only
 the fold-assignment rule changes.
 
+Two caveats on how we report this. First, the accuracy at the
+argmax-selected $k$ slightly over-estimates true performance, because the
+maximum over a noisy grid is upward-biased (Cawley \& Talbot, 2010); here
+the effect is negligible, as the stratified-blocked curve is nearly flat
+near the optimum ($k{=}1{:}\,0.7778$, $k{=}3{:}\,0.7777$,
+$k{=}5{:}\,0.7770$). Second, the $\pm$ we report is the standard deviation
+of accuracy across the five folds from a single seed; because the folds
+share training data this is an informal measure of dispersion, not a
+calibrated confidence interval (Bengio \& Grandvalet, 2004).
+
 \subsection{Cross-validation schemes (how the splitting actually works)}
 
 We implement all three schemes ourselves rather than delegating to a
@@ -323,19 +341,27 @@ quintile of the class-1-proportion distribution, so every fold's class
 balance is within $\sim$3\pp{} of the overall $\sim$54\% class-0 balance.
 This keeps the temporal-isolation guarantee of blocked CV (neighbours stay
 together inside a segment) \emph{and} restores the class-balance guarantee
-of stratified CV. Figure~\ref{fig:folds} visualises the per-fold sample
-assignments under all three schemes.
+of stratified CV. One residual leak remains: we do not insert a seam gap
+\emph{between} adjacent segments, so the two samples straddling each of the
+$\sim$99 segment boundaries can land in different folds. This affects under
+$1\%$ of training samples ($99/11{,}917$), so it can inflate the
+stratified-blocked accuracy by at most a point or two---a caveat we revisit
+when reconciling the CV and holdout estimates (\S\ref{sec:holdout}).
+Figure~\ref{fig:folds} shows the chronological training partition with the
+naive-blocked 5-fold boundaries and the eye-state label strip, making the
+long, unevenly distributed label runs---the reason naive blocking fails and
+stratification is needed---visible at a glance.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.7\linewidth]{04b_timeseries_with_folds.png}
-  \caption{Per-fold sample assignments under the three CV schemes.
-  Shuffled (top) scatters each fold across the whole recording, so temporal
-  neighbours of a test sample are in the training folds. Naive blocked
-  (middle) uses 5 long contiguous chunks with very uneven class balance.
-  Stratified blocked (bottom) uses 100 short contiguous segments
-  redistributed so each fold is class-balanced while neighbours stay
-  together.}
+  \includegraphics[width=0.62\linewidth]{04b_timeseries_with_folds.png}
+  \caption{The chronological training partition ($z$-scored 14 channels,
+  offset for readability) with the four naive-blocked 5-fold boundaries
+  (red vertical lines) and the eye-state label strip (blue $=$ eyes open,
+  $0$; red $=$ eyes closed, $1$). The long, unevenly distributed label runs
+  mean the five contiguous naive-blocked folds are far from class-balanced,
+  motivating the stratified-blocked scheme (Scheme~C), which instead
+  redistributes 100 short contiguous segments across folds.}
   \label{fig:folds}
 \end{figure}
 
@@ -352,13 +378,17 @@ the same grid. These are supporting evidence, not the primary result.
 
 \subsection{Metrics}
 
-We report \textbf{accuracy} $= (\mathrm{TP}+\mathrm{TN})/N$ as the headline
-metric for both CV and holdout, and \textbf{sensitivity} (recall for
-closed$=1$) and \textbf{specificity} (recall for open$=0$) in the holdout
-confusion matrices. The chronological holdout is heavily class-imbalanced
-($\sim$91\% class-0, because the final segment of the recording is a long
-eyes-open run), so we treat the per-fold CV numbers, not the holdout
-accuracy, as the meaningful summary.
+We report \textbf{accuracy} $= (\mathrm{TP}+\mathrm{TN})/N$ for both CV and
+holdout, and---because the chronological holdout is heavily class-imbalanced
+($90.6\%$ class-0, as the final segment of the recording is a long
+eyes-open run)---we also report \textbf{sensitivity} (recall for
+closed$=1$), \textbf{specificity} (recall for open$=0$), and
+\textbf{balanced accuracy} (the mean of the two) on the holdout, since raw
+accuracy on a $91/9$ split is misleading. We distinguish two kinds of
+estimate throughout: the \emph{within-recording} CV accuracy (resampled from
+the training partition) and the \emph{out-of-time} holdout accuracy (a
+genuinely future, unseen segment); \S\ref{sec:holdout} shows they disagree,
+and we discuss why.
 
 % ===========================================================================
 \section{Results}
@@ -424,17 +454,16 @@ training point), and large $k$ is more rigid (a smooth, high-bias boundary).
 The shape of the curves in Figure~\ref{fig:ksweep} is itself diagnostic of
 overfitting-via-leakage. Under \emph{honest} stratified blocked CV, accuracy
 \emph{decreases} monotonically as $k$ grows from $1$ to $201$
-($0.778 \to 0.710$): the flexible model genuinely generalises best, with no
-sign of the usual ``too-flexible'' overfitting dip, because the signal it
-exploits (short-range temporal smoothness within a segment) is real and
+($0.778 \to 0.710$): the flexible model generalises best, because the signal
+it exploits (short-range temporal smoothness within a segment) is real and
 local. Under \emph{shuffled} CV the curve is pathologically flat-and-high
-($\sim$0.97 everywhere): the model is memorising the temporal twin of each
-test sample regardless of $k$. That flat-near-1 curve is the fingerprint of
+($\sim$0.97 everywhere): the model memorises the temporal twin of each test
+sample regardless of $k$. That flat-near-1 shape is the fingerprint of
 leakage-driven overfitting---the estimator looks like it cannot overfit
-because the ``test'' samples are duplicates of training samples. The honest
-curve is the one that behaves like a real bias--variance trade-off.
+because the ``test'' samples are near-duplicates of training samples.
 
 \subsection{Leakage-gap analysis}
+\label{sec:leakgap}
 
 The methodological centrepiece is the \textbf{leakage gap}: the difference
 between an estimator's leaky shuffled-CV accuracy and its honest
@@ -448,12 +477,14 @@ fold boundary, not to model quality: the model is $1$-NN in both cases and
 the training partition is identical---only the fold-assignment rule changes.
 Under shuffled CV the temporal neighbour of every test sample lands in a
 training fold with $\sim$80\% probability and carries the same label with
-$\sim$99.7\% probability; under stratified blocked CV that neighbour is
-reserved into the same segment as the test sample. The honest accuracy at
-$k=1$, $77.8\% \pm 2.7\%$, is nonetheless $\sim$23\pp{} above the
-$55.12\%$ baseline---the classifier is far from useless, just far less
-impressive than the shuffled number implies. \textbf{Both parts of our
-hypothesis are therefore supported.}
+$\sim$99.7\% probability (the lag-1 \emph{label} autocorrelation); under
+stratified blocked CV that neighbour is reserved into the test sample's own
+segment in all but the $<$1\% of cases that straddle a segment boundary. The
+honest within-recording accuracy at $k=1$, $77.8\% \pm 2.7\%$, is
+$\sim$23\pp{} above the $55.12\%$ baseline, so the shuffled estimate is
+clearly inflated (hypothesis part~(ii)). Whether this within-recording
+signal \emph{generalises out-of-time} is a separate question that the
+holdout answers less favourably (\S\ref{sec:holdout}).
 
 \subsection{Supporting evidence: alternative classifiers}
 
@@ -482,7 +513,7 @@ classifiers (Table~\ref{tab:gaps}, Figure~\ref{fig:threeway}).
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.66\linewidth]{14_cv_comparison_three_way.png}
+  \includegraphics[width=0.6\linewidth]{14_cv_comparison_three_way.png}
   \caption{Three-way 5-fold CV accuracy across the four palette
   classifiers. Orange: shuffled; blue: naive blocked; green: stratified
   blocked. The \knn{} bar group has by far the largest
@@ -507,28 +538,50 @@ sample---and its gap is $4$--$8\times$ larger than any other.
 The selected model is \knn{} with $k=1$ on the $z$-scored 14-channel
 features. \knn{} is non-parametric, so the ``fitted parameters'' are not
 coefficients but (i) the selected hyperparameter $k=1$ and (ii) the stored
-training set itself together with the per-channel $z$-scoring constants
-$(\mu_c,\sigma_c)$ estimated on the full training partition (persisted in
-\texttt{data/processed/scaler.json}). For a concrete parametric contrast,
-the LDA comparison model \emph{does} have estimable coefficients: its
-14-channel discriminant weights (estimated on the full training set) are
-reported in \texttt{figures/10\_lda\_coefficients.png}, with the
-occipital/parietal channels (O1, O2, P7, P8) carrying the largest
-magnitude---consistent with eye-closure altering posterior alpha rhythms.
+training set together with the per-channel $z$-scoring constants
+$(\mu_c,\sigma_c)$. Following the standard convention of refitting the final
+model on all available data once the hyperparameter is fixed (James et al.,
+2021), the deployable model recomputes $(\mu_c,\sigma_c)$ and sets the
+$1$-NN store on the \emph{entire} cleaned dataset ($n=14{,}976$);
+cross-validation is used only for selection, not for the final fit. For a
+concrete parametric contrast, the LDA comparison model \emph{does} have
+estimable coefficients (\texttt{figures/10\_lda\_coefficients.png}): the
+largest-magnitude discriminant weights fall on the temporal (T7, T8) and
+frontal (F8, F7) channels, with parietal P7 also prominent, while the
+occipital channels O1/O2 are small-to-negligible. We therefore do
+\emph{not} attribute the discriminant to posterior alpha rhythms; large
+temporal and frontal weights are more consistent with eye-movement and
+muscle (EMG) artefact and with the per-sensor amplitude-range differences
+that Roesler \& Suendermann (2013) identify as discriminative on this
+dataset. A linear discriminant on raw per-sample voltages cannot in any
+case isolate band-limited alpha power.
 
-\paragraph{Final accuracy.}
-The honest cross-validated estimate of the selected model
-($k=1$, stratified blocked CV) is $\mathbf{77.8\% \pm 2.7\%}$, versus the
-$55.12\%$ majority baseline. As a confirmatory out-of-sample check,
-Figure~\ref{fig:confusion} shows per-model confusion matrices on the $20\%$
-chronological holdout. The holdout is $\sim$91\% class-0, so its accuracy is
-dominated by specificity and we do not over-interpret it; we did not
-rebalance it because doing so would itself introduce leakage. The CV
-numbers above are the headline estimate.
+\paragraph{Final prediction accuracy.}
+The headline estimate is the honest \emph{within-recording} cross-validated
+accuracy of the selected model ($k=1$, stratified blocked CV):
+$\mathbf{77.8\% \pm 2.7\%}$, versus the $55.12\%$ majority baseline.
+
+\paragraph{Reconciling the holdout: out-of-time generalisation is weaker.}
+\label{sec:holdout}
+The $20\%$ chronological holdout is the single most leakage-resistant test
+in the study---it is genuinely future data, separated from training by the
+$64$-sample seam gap---so we confront it directly rather than discarding it.
+On the holdout, \knn{} ($k=1$) scores only $51.3\%$ accuracy with
+sensitivity $0.45$ and specificity $0.52$, i.e.\ a balanced accuracy of
+$\approx 0.49$: essentially chance, and far below the holdout's own
+$90.6\%$ majority baseline (the final segment is a long eyes-open run, so
+the holdout is $90.6\%$ class-0 versus $46.5\%$ in training;
+Figure~\ref{fig:confusion}). The within-recording CV cannot see this prior
+shift because every fold is rebalanced to the training distribution, whereas
+the holdout can. The honest reading is therefore split: the leakage result
+(part~(ii)) is robust, but the claim that the model captures a
+\emph{generalisable} eye-state signal (part~(i)) holds only \emph{within}
+the recording and is \emph{not} corroborated out-of-time on this single
+$\sim$117\,s session.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.64\linewidth]{15_confusion_matrices.png}
+  \includegraphics[width=0.6\linewidth]{15_confusion_matrices.png}
   \caption{Per-model confusion matrices on the $20\%$ chronological holdout
   test set (rows: true; columns: predicted). The holdout is dominated by
   eyes-open samples ($\sim$91\% class-0), so accuracy here is mostly driven
@@ -541,29 +594,33 @@ numbers above are the headline estimate.
 
 \subsection{What we conclude about the hypothesis}
 
-Both parts of our hypothesis hold. (i)~The honest \knn{} accuracy
-($77.8\%$) beats the majority baseline ($55.12\%$) by $\sim$23\pp, so raw
-14-channel voltages do carry a genuine, generalisable eye-state signal.
-(ii)~The shuffled-CV estimate ($97.3\%$) is inflated by $19.5\pp$ relative
-to the honest estimate, and that inflation is leakage attributable purely
-to the CV scheme: the model, the selected $k$, and the training data are
-identical across schemes.
+Our hypothesis holds in part. Part~(ii) is strongly supported: the
+shuffled-CV estimate ($97.3\%$) is inflated by $19.5\pp$ relative to the
+honest stratified-blocked estimate, and that inflation is leakage
+attributable purely to the CV scheme---the model, the selected $k$, and the
+training data are identical across schemes (\S\ref{sec:leakgap}). Part~(i)
+is supported only within the recording: the honest \emph{within-recording}
+\knn{} accuracy ($77.8\%$) beats the $55.12\%$ baseline by $\sim$23\pp, but
+the out-of-time holdout (balanced accuracy $\approx 0.49$,
+\S\ref{sec:holdout}) does \emph{not} corroborate a generalisable
+voltage-to-state rule. We report this candidly: on a single-subject,
+single-session recording, within-recording resampling and genuine
+out-of-time prediction disagree, and only the leakage finding is
+unambiguous.
 
 \takehome{Shuffled CV says we have a 97\% classifier. Honest stratified
 blocked CV says we have a 78\% classifier. The difference is leakage, not
 signal.}
 
 \subsection{Why \knn{} is uniquely vulnerable}
-A $1$-NN classifier predicts the class of the single nearest training
-neighbour. Because the lag-1 channel correlation is $\approx 0.997$, the
-nearest neighbour in feature space is almost always the temporal neighbour.
-Under shuffled CV that neighbour is in a training fold $\sim$80\% of the
-time and shares the test label $\sim$99.7\% of the time, so $1$-NN trivially
-exceeds $95\%$ without learning any voltage-to-state rule. Under stratified
-blocked CV the temporal neighbour is reserved into the test sample's own
-segment, forcing \knn{} onto the next-nearest non-adjacent sample, and
-accuracy drops to $77.8\%$. Models that average over many samples (LDA,
-PCA$\to$LDA, PCR) cannot exploit this and show only $2$--$6\pp$ gaps.
+The mechanism is the one quantified in \S\ref{sec:leakgap}: because the
+per-channel lag-1 voltage autocorrelation is $\approx 0.97$, a test sample's
+nearest neighbour is almost always its temporal twin, whose label matches
+with probability $\approx 0.997$. Shuffled CV leaves that twin in a training
+fold, so $1$-NN exceeds $95\%$ by memorisation; stratified blocked CV
+reserves it into the test sample's own segment, dropping accuracy to
+$77.8\%$. Models that average over many samples (LDA, PCA$\to$LDA, PCR)
+cannot exploit per-sample twins and show only $2$--$6\pp$ gaps.
 
 \subsection{Why naive blocked CV underperforms the baseline}
 \label{sec:naive}
@@ -579,8 +636,13 @@ stratified blocked CV recovers $\sim$28\pp{} over naive blocked.
 \subsection{Implications and future work}
 A non-trivial fraction of tutorials and student projects on this dataset
 report $95$--$98\%$ \knn{} accuracy under shuffled $k$-fold. Our analysis
-suggests those numbers are a CV-protocol artefact: the honest accuracy is
-$77.8\%$ and the extra $\sim$20\pp{} is adjacent-sample leakage. This echoes
+suggests those numbers are a CV-protocol artefact: the honest
+within-recording accuracy is $77.8\%$ and the extra $\sim$20\pp{} is
+adjacent-sample leakage. Tellingly, even the dataset's originators obtain
+their best results with instance-based learners (KStar/IB1, $\approx 97\%$)
+under shuffled 10-fold CV while non-instance-based methods score far worse
+(Roesler \& Suendermann, 2013)---exactly the signature of leakage that
+instance-based models are uniquely able to exploit. This echoes
 broader cautions about i.i.d.\ CV on autocorrelated signals (Bergmeir \&
 Ben\'itez, 2012). The practical recommendation is to use blocked,
 class-stratified CV (or an explicit out-of-time holdout with a seam gap)
@@ -593,14 +655,23 @@ give \knn{} more meaningful neighbours and likely shrink the leakage gap;
 (iii)~extend the $k$ sweep to characterise the leakage curve more finely.
 The project is, above all, a worked example of how a methodologically sound
 model-selection procedure can still be misled by an upstream choice---the
-CV scheme---that has nothing to do with the model itself.
+CV scheme---unrelated to the model itself.
 
 % ===========================================================================
 \section*{References}
-\begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+{\small
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt,topsep=1pt]
   \item Roesler, O. (2013). \emph{EEG Eye State Data Set}. UCI Machine
     Learning Repository, id~\#264.
     \url{https://archive.ics.uci.edu/dataset/264/eeg+eye+state}
+  \item Roesler, O., \& Suendermann, D. (2013). A First Step towards Eye
+    State Prediction Using EEG. \emph{Proc.\ AIHLS}.
+  \item Cawley, G.~C., \& Talbot, N.~L.~C. (2010). On over-fitting in model
+    selection and subsequent selection bias in performance evaluation.
+    \emph{Journal of Machine Learning Research} 11:2079--2107.
+  \item Bengio, Y., \& Grandvalet, Y. (2004). No unbiased estimator of the
+    variance of $k$-fold cross-validation. \emph{Journal of Machine Learning
+    Research} 5:1089--1105.
   \item Mukamel, R. (2026). \emph{COGS 109 --- Modelling and Data Analysis,
     Spring 2026 Study Guide}. UC San Diego.
   \item James, G., Witten, D., Hastie, T., \& Tibshirani, R. (2021).
@@ -611,5 +682,6 @@ CV scheme---that has nothing to do with the model itself.
   \item Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in
     Python. \emph{Journal of Machine Learning Research} 12:2825--2830.
 \end{enumerate}
+}
 
 \end{document}

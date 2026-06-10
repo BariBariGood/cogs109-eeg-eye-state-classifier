@@ -5,7 +5,8 @@ Three schemes are provided so the modeling notebook can compare them honestly:
 * ``blocked_kfold_indices`` — contiguous time blocks. Each fold's test set is
   one ~equal-sized chunk of the time-ordered training partition; the train
   set is the remaining time. This respects the temporal autocorrelation in
-  the EEG recording (lag-1 r ≈ 0.997). Downside: with only 5 macro-blocks
+  the EEG recording (per-channel lag-1 r ≈ 0.97; the binary label is even
+  more persistent at lag-1 r ≈ 0.997). Downside: with only 5 macro-blocks
   on this single-subject recording, individual folds can land on segments
   with very different class balance from the overall training partition
   (folds 3/4 in particular swing to 20% / 66% class-0 vs ~54% overall),
