@@ -25,16 +25,6 @@
 
 \graphicspath{{../figures/}{figures/}}
 
-% A lighter rule for the take-home callout boxes.
-\definecolor{calloutgray}{gray}{0.93}
-\newcommand{\takehome}[1]{%
-  \begin{center}%
-  \colorbox{calloutgray}{%
-    \begin{minipage}{0.93\linewidth}%
-    \vspace{2pt}\itshape #1\vspace{2pt}%
-    \end{minipage}}%
-  \end{center}}
-
 \newcommand{\pp}{\,pp}          % percentage points
 \newcommand{\knn}{\textsc{knn}}
 
@@ -71,7 +61,7 @@ blocked CV, and $77.8\% \pm 2.7\%$ under honest stratified blocked CV. The
 $19.5\pp$ gap between the shuffled and stratified-blocked estimates is
 leakage attributable to scheme choice---not to model quality, since the
 identical \knn{} model is evaluated in all three settings on the same
-training data. A sanity-check appendix runs the same idea on three
+training data. A sanity-check analysis runs the same idea on three
 alternative classifiers (LDA, PCA$\to$LDA, PCR-as-classifier) and finds
 leakage gaps of only $2$--$6\pp$, consistent with \knn{} being uniquely
 vulnerable to lag-1 autocorrelation because it predicts from per-sample
@@ -109,11 +99,9 @@ correctly. That is a property of the cross-validation rule, not of the
 classifier.
 
 The question this report addresses is therefore methodological rather than
-predictive:
-
-\takehome{Given an autocorrelated single-subject EEG recording and a \knn{}
-classifier, how does the choice of cross-validation scheme change the
-result of an otherwise identical model-selection procedure?}
+predictive: given an autocorrelated single-subject EEG recording and a
+\knn{} classifier, how does the choice of cross-validation scheme change the
+outcome of an otherwise identical model-selection procedure?
 
 This matters because cross-validation is the standard tool students are
 taught for honest accuracy estimation, yet on autocorrelated time-series
@@ -160,7 +148,7 @@ the lag-1 autocorrelation of a single voltage channel is high
 ($\approx 0.97$ on average, ranging $0.91$--$0.99$ across the 14 channels
 after outlier removal)---adjacent samples are nearly identical---and the
 label, being piecewise-constant over long runs, is even more persistent:
-its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.83$ at lag~50
+its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.86$ at lag~50
 ($\approx 0.4$\,s), crossing zero only at very long lags
 (Figure~\ref{fig:autocorr}).
 
@@ -188,7 +176,7 @@ its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.83$ at lag~50
 The consequence is direct: \emph{any} CV protocol that splits samples
 uniformly at random leaves each test sample with a near-duplicate in its own
 training set, so a model that predicts from per-sample similarity (\knn{} at
-$k=1$) will look spectacular while merely memorising---not learning a
+$k=1$) will appear highly accurate while merely memorising---not learning a
 generalisable voltage-to-label rule.
 
 \subsection{Hypothesis}
@@ -203,7 +191,7 @@ estimates because of temporal leakage between adjacent samples.
 
 \noindent The hypothesis has two parts: (i) the honest accuracy beats the
 majority baseline, and (ii) the shuffled estimate is inflated relative to a
-leakage-resistant estimate. We test both and report what we find.
+leakage-resistant estimate. We test both.
 
 % ===========================================================================
 \section{Methods}
@@ -245,8 +233,8 @@ comparison between an honest and a leaky estimate of the same baseline.
 
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item \textbf{Outlier removal.} We drop the four samples with at least
-    one channel exceeding $4$ standard deviations above the channel mean
-    ($z > 4$). This is standard EEG hygiene for headset disconnections and
+    one channel whose global standardised value exceeds $4$ in magnitude
+    ($|z| > 4$). This is standard EEG hygiene for headset disconnections and
     artefacts; an ablation (\texttt{tables/02\_outlier\_ablation.csv}) shows
     it does not materially change downstream accuracy but stabilises
     per-channel summary statistics. Cleaning leaves $14{,}976$ samples.
@@ -317,8 +305,8 @@ into 5 contiguous chunks. Fold $i$'s test set is chunk $i$ (a single
 contiguous span of time); its training set is the remaining time. This
 eliminates lag-$\le 1$ leakage but introduces a new problem: because the
 label runs are long and unevenly distributed, individual chunks can be
-near class-pure (e.g.\ one chunk at $\sim$20\% class-0 vs.\ the overall
-$\sim$54\%). Per-fold accuracy variance therefore explodes and the mean can
+near class-pure (e.g.\ one chunk at $\sim$20\% class-0 vs.\ the training
+partition's $\sim$46.5\% class-0). Per-fold accuracy variance therefore explodes and the mean can
 fall \emph{below} the majority baseline. We include it to make the failure
 mode visible---it is \emph{not} a scheme we recommend.
 
@@ -331,7 +319,8 @@ proportion, and walk the sorted list in chunks of $5$; within each chunk
 the five segments are assigned to the five folds by a seed-fixed random
 permutation. The effect is that each fold receives one segment from each
 quintile of the class-1-proportion distribution, so every fold's class
-balance is within $\sim$3\pp{} of the overall $\sim$54\% class-0 balance.
+balance is within $\sim$1.5\pp{} of the training partition's $\sim$46.5\%
+class-0 ($\sim$53.5\% class-1) balance.
 This keeps the temporal-isolation guarantee of blocked CV (neighbours stay
 together inside a segment) \emph{and} restores the class-balance guarantee
 of stratified CV. One residual leak remains: we do not insert a seam gap
@@ -388,7 +377,7 @@ and we discuss why.
 
 \subsection{Model selection: \knn{} under three CV schemes}
 
-Figure~\ref{fig:ksweep} is the headline figure. It plots \knn{} mean
+Figure~\ref{fig:ksweep} plots \knn{} mean
 accuracy $\pm$ standard deviation as a function of $k$ (log scale) under all
 three CV schemes on the same axes.
 
@@ -433,11 +422,11 @@ Applying the argmax-accuracy rule to each scheme yields Table~\ref{tab:pick}.
   \end{tabular}
 \end{table}
 
-The remarkable result is that \textbf{all three schemes select the same
+The key result is that \textbf{all three schemes select the same
 hyperparameter} ($k=1$): the model-selection procedure is robust, but the
 \emph{answer} it reports is not. The selected accuracy ranges from $50.0\%$
-(naive blocked) to $97.3\%$ (shuffled)---a $47\pp$ spread---despite the
-procedure, the model, the data, and the selected $k$ being identical.
+(naive blocked) to $97.3\%$ (shuffled)---a $47\pp$ spread---despite an
+identical procedure, model, data, and selected $k$.
 
 \subsection{Complexity, flexibility, and overfitting}
 
@@ -449,7 +438,7 @@ overfitting-via-leakage. Under \emph{honest} stratified blocked CV, accuracy
 \emph{decreases} monotonically as $k$ grows from $1$ to $201$
 ($0.778 \to 0.710$): the flexible model generalises best, because the signal
 it exploits (short-range temporal smoothness within a segment) is real and
-local. Under \emph{shuffled} CV the curve is pathologically flat-and-high
+local. Under \emph{shuffled} CV the curve is anomalously flat and high
 ($\sim$0.97 everywhere): the model memorises the temporal twin of each test
 sample regardless of $k$. That flat-near-1 shape is the fingerprint of
 leakage-driven overfitting---the estimator looks like it cannot overfit
@@ -488,7 +477,7 @@ classifiers (Table~\ref{tab:gaps}, Figure~\ref{fig:threeway}).
   \centering
   \caption{Per-model leakage gaps (shuffled CV minus stratified-blocked CV)
   at the selected hyperparameter. \knn{}'s gap is the outlier:
-  $\sim$4--8$\times$ larger than any other classifier in the palette.}
+  $\sim$3.5--8$\times$ larger than any other classifier in the palette.}
   \label{tab:gaps}
   \setlength{\tabcolsep}{4pt}
   \small
@@ -541,7 +530,8 @@ concrete parametric contrast, the LDA comparison model \emph{does} have
 estimable coefficients (\texttt{figures/10\_lda\_coefficients.png}): the
 largest-magnitude discriminant weights fall on the temporal (T7, T8) and
 frontal (F8, F7) channels, with parietal P7 also prominent, while the
-occipital channels O1/O2 are small-to-negligible. We therefore do
+occipital channels rank well below these leaders (O1 negligible, O2 only
+modest). We therefore do
 \emph{not} attribute the discriminant to posterior alpha rhythms; large
 temporal and frontal weights are more consistent with eye-movement and
 muscle (EMG) artefact and with the per-sensor amplitude-range differences
@@ -550,7 +540,7 @@ dataset. A linear discriminant on raw per-sample voltages cannot in any
 case isolate band-limited alpha power.
 
 \paragraph{Final prediction accuracy.}
-The headline estimate is the honest \emph{within-recording} cross-validated
+The primary estimate is the honest \emph{within-recording} cross-validated
 accuracy of the selected model ($k=1$, stratified blocked CV):
 $\mathbf{77.8\% \pm 2.7\%}$, versus the $55.12\%$ majority baseline.
 
@@ -590,30 +580,16 @@ $\sim$117\,s session.
 Our hypothesis holds in part. Part~(ii) is strongly supported: the
 shuffled-CV estimate ($97.3\%$) is inflated by $19.5\pp$ relative to the
 honest stratified-blocked estimate, and that inflation is leakage
-attributable purely to the CV scheme---the model, the selected $k$, and the
-training data are identical across schemes (\S\ref{sec:leakgap}). Part~(i)
+attributable purely to the CV scheme rather than the model
+(\S\ref{sec:leakgap}). Part~(i)
 is supported only within the recording: the honest \emph{within-recording}
 \knn{} accuracy ($77.8\%$) beats the $55.12\%$ baseline by $\sim$23\pp, but
 the out-of-time holdout (balanced accuracy $\approx 0.49$,
 \S\ref{sec:holdout}) does \emph{not} corroborate a generalisable
-voltage-to-state rule. We report this candidly: on a single-subject,
+voltage-to-state rule. On a single-subject,
 single-session recording, within-recording resampling and genuine
 out-of-time prediction disagree, and only the leakage finding is
 unambiguous.
-
-\takehome{Shuffled CV says we have a 97\% classifier. Honest stratified
-blocked CV says we have a 78\% classifier. The difference is leakage, not
-signal.}
-
-\subsection{Why \knn{} is uniquely vulnerable}
-The mechanism is the one quantified in \S\ref{sec:leakgap}: because the
-per-channel lag-1 voltage autocorrelation is $\approx 0.97$, a test sample's
-nearest neighbour is almost always its temporal twin, whose label matches
-with probability $\approx 0.997$. Shuffled CV leaves that twin in a training
-fold, so $1$-NN exceeds $95\%$ by memorisation; stratified blocked CV
-reserves it into the test sample's own segment, dropping accuracy to
-$77.8\%$. Models that average over many samples (LDA, PCA$\to$LDA, PCR)
-cannot exploit per-sample twins and show only $2$--$6\pp$ gaps.
 
 \subsection{Why naive blocked CV underperforms the baseline}
 \label{sec:naive}
@@ -653,28 +629,28 @@ CV scheme---unrelated to the model itself.
 % ===========================================================================
 \section*{References}
 {\small
-\begin{enumerate}[leftmargin=1.5em,itemsep=1pt,topsep=1pt]
+\begin{itemize}[leftmargin=1.5em,label={},itemsep=2pt,topsep=1pt]
+  \item Bengio, Y., \& Grandvalet, Y. (2004). No unbiased estimator of the
+    variance of $k$-fold cross-validation. \emph{Journal of Machine Learning
+    Research} 5:1089--1105.
+  \item Bergmeir, C., \& Ben\'itez, J.~M. (2012). On the use of
+    cross-validation for time series predictor evaluation.
+    \emph{Information Sciences} 191:192--213.
+  \item Cawley, G.~C., \& Talbot, N.~L.~C. (2010). On over-fitting in model
+    selection and subsequent selection bias in performance evaluation.
+    \emph{Journal of Machine Learning Research} 11:2079--2107.
+  \item James, G., Witten, D., Hastie, T., \& Tibshirani, R. (2021).
+    \emph{An Introduction to Statistical Learning}, 2nd ed. Springer.
+  \item Mukamel, R. (2026). \emph{COGS 109 --- Modelling and Data Analysis,
+    Spring 2026 Study Guide}. UC San Diego.
+  \item Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in
+    Python. \emph{Journal of Machine Learning Research} 12:2825--2830.
   \item Roesler, O. (2013). \emph{EEG Eye State Data Set}. UCI Machine
     Learning Repository, id~\#264.
     \url{https://archive.ics.uci.edu/dataset/264/eeg+eye+state}
   \item Roesler, O., \& Suendermann, D. (2013). A First Step towards Eye
     State Prediction Using EEG. \emph{Proc.\ AIHLS}.
-  \item Cawley, G.~C., \& Talbot, N.~L.~C. (2010). On over-fitting in model
-    selection and subsequent selection bias in performance evaluation.
-    \emph{Journal of Machine Learning Research} 11:2079--2107.
-  \item Bengio, Y., \& Grandvalet, Y. (2004). No unbiased estimator of the
-    variance of $k$-fold cross-validation. \emph{Journal of Machine Learning
-    Research} 5:1089--1105.
-  \item Mukamel, R. (2026). \emph{COGS 109 --- Modelling and Data Analysis,
-    Spring 2026 Study Guide}. UC San Diego.
-  \item James, G., Witten, D., Hastie, T., \& Tibshirani, R. (2021).
-    \emph{An Introduction to Statistical Learning}, 2nd ed. Springer.
-  \item Bergmeir, C., \& Ben\'itez, J.~M. (2012). On the use of
-    cross-validation for time series predictor evaluation.
-    \emph{Information Sciences} 191:192--213.
-  \item Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in
-    Python. \emph{Journal of Machine Learning Research} 12:2825--2830.
-\end{enumerate}
+\end{itemize}
 }
 
 \end{document}
