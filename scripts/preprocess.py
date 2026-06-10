@@ -35,9 +35,10 @@ N_SPLITS = 5
 # deliberately use a finer-grained M than the conservative default of 50:
 # every fold then receives 20 segments evenly distributed across the
 # class-1-proportion sort order, which keeps per-fold class balance within
-# ~3 percentage points of the overall ~54% class-0 balance and lets the
-# stratified scheme recover its expected ~15–25pp of accuracy that the
-# 5-macro-block naive scheme artificially destroyed.
+# ~1.5 percentage points of the training partition's ~46.5% class-0
+# (~53.5% class-1) balance and lets the stratified scheme recover its
+# expected ~15–25pp of accuracy that the 5-macro-block naive scheme
+# artificially destroyed.
 N_SEGMENTS_STRAT = 100
 TEST_FRAC = 0.20
 SEAM_GAP = 64

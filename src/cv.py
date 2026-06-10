@@ -9,8 +9,9 @@ Three schemes are provided so the modeling notebook can compare them honestly:
   more persistent at lag-1 r ≈ 0.997). Downside: with only 5 macro-blocks
   on this single-subject recording, individual folds can land on segments
   with very different class balance from the overall training partition
-  (folds 3/4 in particular swing to 20% / 66% class-0 vs ~54% overall),
-  which collapses the model's ability to generalise to those folds.
+  (folds 3/4 in particular swing to 20% / 66% class-0 vs the partition's
+  ~46.5% class-0), which collapses the model's ability to generalise to
+  those folds.
 * ``shuffled_kfold_indices`` — i.i.d. random k-fold. This is the standard
   sklearn ``KFold(shuffle=True)``-style split. On a time series with strong
   autocorrelation this leaks neighbors into the test fold and inflates the
