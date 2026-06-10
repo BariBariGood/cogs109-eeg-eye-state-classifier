@@ -8,8 +8,8 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[margin=0.8in]{geometry}
-\setlength{\parskip}{0.5pt}
+\usepackage[margin=0.85in]{geometry}
+\setlength{\parskip}{1pt}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
@@ -20,8 +20,8 @@
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
 \usepackage[compact]{titlesec}
-\titlespacing*{\section}{0pt}{5pt}{2pt}
-\titlespacing*{\subsection}{0pt}{4pt}{1pt}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+\titlespacing*{\subsection}{0pt}{5pt}{2pt}
 
 \graphicspath{{../figures/}{figures/}}
 
@@ -77,10 +77,6 @@ leakage gaps of only $2$--$6\pp$, consistent with \knn{} being uniquely
 vulnerable to lag-1 autocorrelation because it predicts from per-sample
 similarity.
 \end{abstract}
-
-\takehome{Shuffled CV says we have a 97\% classifier. Honest stratified
-blocked CV says we have a 78\% classifier. The difference is leakage, not
-signal.}
 
 % ===========================================================================
 \section{Introduction}
@@ -189,12 +185,11 @@ its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.83$ at lag~50
   \label{fig:autocorr}
 \end{figure}
 
-This is the structural problem at the heart of the report: \emph{any} CV
-protocol that splits samples uniformly at random leaves each test sample
-with a near-duplicate in its own training set. A model whose prediction
-depends on per-sample similarity---\knn{} with $k=1$ being the canonical
-example---will appear spectacular, but the score reflects memorisation,
-not a generalisable voltage-to-label rule.
+The consequence is direct: \emph{any} CV protocol that splits samples
+uniformly at random leaves each test sample with a near-duplicate in its own
+training set, so a model that predicts from per-sample similarity (\knn{} at
+$k=1$) will look spectacular while merely memorising---not learning a
+generalisable voltage-to-label rule.
 
 \subsection{Hypothesis}
 
@@ -206,11 +201,9 @@ $k$-fold cross-validation will substantially exceed honest out-of-time
 estimates because of temporal leakage between adjacent samples.
 \end{quote}
 
-\noindent The hypothesis has two parts and we test both: (i) the honest
-accuracy beats the majority baseline, and (ii) the shuffled estimate is
-inflated relative to a leakage-resistant estimate. A negative or ambiguous
-result on either part would still be informative; we report exactly what we
-find.
+\noindent The hypothesis has two parts: (i) the honest accuracy beats the
+majority baseline, and (ii) the shuffled estimate is inflated relative to a
+leakage-resistant estimate. We test both and report what we find.
 
 % ===========================================================================
 \section{Methods}
