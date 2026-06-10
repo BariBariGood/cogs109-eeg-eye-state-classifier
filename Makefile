@@ -1,4 +1,4 @@
-.PHONY: all data figures clean test fetch eda modeling poster
+.PHONY: all data figures clean test fetch eda modeling poster report
 
 all: data figures modeling
 
@@ -20,6 +20,14 @@ modeling: data
 
 poster:
 	python scripts/build_poster.py
+
+# Build the paper-style PDF from report/final_report.tex (needs a LaTeX
+# toolchain, e.g. texlive-latex-base + texlive-latex-extra). Run twice so
+# cross-references and the figure/table numbers resolve.
+report:
+	cd report && pdflatex -interaction=nonstopmode -halt-on-error final_report.tex \
+	  && pdflatex -interaction=nonstopmode -halt-on-error final_report.tex
+	rm -f report/final_report.aux report/final_report.log report/final_report.out
 
 test:
 	pytest tests/

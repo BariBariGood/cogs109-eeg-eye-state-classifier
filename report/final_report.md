@@ -226,7 +226,7 @@ We compare three 5-fold cross-validation schemes on the training set:
   eliminates most lag-≤1 leakage but introduces a new problem:
   because the label runs are long and unevenly distributed,
   individual folds can end up near-class-pure (e.g. one fold lands at
-  ~20% class-0 vs. the overall ~54% class-0). The per-fold accuracy
+  ~20% class-0 vs. the training partition's ~46.5% class-0). The per-fold accuracy
   variance therefore explodes, and the mean accuracy can fall *below*
   the majority-class baseline. We include this scheme primarily to
   make the failure mode visible — it is *not* a scheme we would

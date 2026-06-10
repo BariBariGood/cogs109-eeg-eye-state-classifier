@@ -19,8 +19,12 @@ CV scheme — well above the 55.12% majority-class baseline — but the
 **19.5 percentage-point gap** is leakage attributable to scheme choice,
 not model quality.
 
-The full paper-style writeup lives at [`report/final_report.md`](report/final_report.md)
-and the academic poster lives at [`poster/poster.pptx`](poster/poster.pptx).
+The full paper-style writeup lives in [`report/`](report/) — a LaTeX
+research paper [`report/final_report.tex`](report/final_report.tex)
+(built PDF: [`report/final_report.pdf`](report/final_report.pdf), ~10
+pages) alongside the original Markdown draft
+[`report/final_report.md`](report/final_report.md) — and the academic
+poster lives at [`poster/poster.pptx`](poster/poster.pptx).
 
 ## Executive summary
 
@@ -165,7 +169,9 @@ and [`tables/03_cv_accuracy_comparison.csv`](tables/03_cv_accuracy_comparison.cs
 │   ├── poster.pptx                # 48"×36" final poster (source of truth)
 │   └── README.md                  # poster-specific notes
 ├── report/
-│   └── final_report.md            # paper-style writeup (~4000 words)
+│   ├── final_report.tex           # LaTeX research paper (COGS 109 rubric sections)
+│   ├── final_report.pdf           # built PDF (~10 pages)
+│   └── final_report.md            # original Markdown draft (~4000 words)
 ├── scripts/
 │   ├── preprocess.py              # full preprocessing CLI (idempotent)
 │   ├── regenerate_figure_11.py    # standalone KNN k-sweep figure (3 CV schemes)
@@ -219,6 +225,7 @@ Individual Makefile targets:
 | `make figures`  | run `notebooks/01_eda.ipynb` (writes figures 01–10)       |
 | `make modeling` | run `notebooks/02_modeling.ipynb` (writes figures 11–15)  |
 | `make poster`   | run `scripts/build_poster.py` (writes `poster/poster.pptx`)|
+| `make report`   | build `report/final_report.pdf` from LaTeX (needs `pdflatex`)|
 | `make test`     | run pytest                                                |
 | `make all`      | `data` + `figures` + `modeling`                           |
 | `make clean`    | remove regeneratable outputs                              |

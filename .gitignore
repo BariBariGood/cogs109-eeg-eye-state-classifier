@@ -37,3 +37,12 @@ Thumbs.db
 
 # Local-only poster preview (regenerated on demand by scripts/build_poster.py)
 poster/poster_preview.png
+
+# LaTeX build artifacts (we commit final_report.tex and final_report.pdf only)
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
