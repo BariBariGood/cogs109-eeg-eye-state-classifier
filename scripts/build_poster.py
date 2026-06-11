@@ -146,11 +146,9 @@ SUPPORTING_BULLETS = [
 REFERENCES = [
     "[1] Roesler, O. (2013). EEG Eye State Data Set. UCI ML Repository #264. "
     "https://archive.ics.uci.edu/dataset/264/eeg+eye+state",
-    "[2] Mukamel, E. (2026). COGS 109 — Modelling and Data Analysis "
-    "Spring 2026 Study Guide. UC San Diego.",
-    "[3] James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). An "
+    "[2] James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). An "
     "Introduction to Statistical Learning, 2nd ed. Springer.",
-    "[4] Bergmeir, C., Benítez, J. M. (2012). On the use of "
+    "[3] Bergmeir, C., Benítez, J. M. (2012). On the use of "
     "cross-validation for time series predictor evaluation. "
     "Information Sciences 191:192–213.",
 ]

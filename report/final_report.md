@@ -55,7 +55,7 @@ question to which it can almost always answer correctly. That is a
 property of the CV rule, not of the classifier.
 
 We framed the project around the assignment template that the
-COGS 109 SP26 study guide requires: **approach** = classification,
+COGS 109 SP26 course requires: **approach** = classification,
 **model** = K-nearest neighbours, **model selection procedure** = sweep
 `k` over a log-spaced grid and pick the value that minimises mean
 5-fold CV error. Our methodological contribution is to run that *same*
@@ -161,7 +161,7 @@ defer it to after the split.
 
 ### 3.2 Approach selection — classification
 
-The COGS 109 SP26 study guide enumerates several broad approaches
+The COGS 109 SP26 course covers several broad approaches
 (linear / polynomial / spline regression, PCR, LDA, KNN, K-means,
 hierarchical clustering, PCA). The target variable here is the binary
 `eyeDetection` label, so **classification** is the natural approach:
@@ -513,7 +513,7 @@ autocorrelated signals (Bergmeir & Benítez, 2012).
 ## 7. Conclusion
 
 On the UCI EEG Eye State dataset, using only the methods covered in
-the COGS 109 SP26 study guide, we picked classification as our
+COGS 109 SP26, we picked classification as our
 approach, KNN as our model, and a `k`-sweep over a log-spaced grid as
 our model-selection procedure. We ran that same procedure under
 three different cross-validation schemes (shuffled, naive blocked,
@@ -536,15 +536,13 @@ CV scheme — that has nothing to do with the model itself.
 
 1. Roesler, O. (2013). *EEG Eye State Data Set*. UCI Machine Learning
    Repository, id #264. <https://archive.ics.uci.edu/dataset/264/eeg+eye+state>
-2. Mukamel, E. (2026). *COGS 109 — Modelling and Data Analysis Spring
-   2026 Study Guide*. UC San Diego.
-3. James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). *An
+2. James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). *An
    Introduction to Statistical Learning, with Applications in R*,
    2nd ed. Springer.
-4. Bergmeir, C., Benítez, J. M. (2012). On the use of cross-validation
+3. Bergmeir, C., Benítez, J. M. (2012). On the use of cross-validation
    for time series predictor evaluation. *Information Sciences*
    191:192–213.
-5. Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion,
+4. Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion,
    B., et al. (2011). Scikit-learn: Machine learning in Python.
    *Journal of Machine Learning Research* 12:2825–2830. (Used here
    for the `KNeighborsClassifier`, `LinearDiscriminantAnalysis`,
