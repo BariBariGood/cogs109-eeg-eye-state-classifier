@@ -293,7 +293,7 @@ MIT — see [LICENSE](LICENSE).
 
 1. Roesler, O. (2013). *EEG Eye State Data Set*. UCI ML Repository #264.
    <https://archive.ics.uci.edu/dataset/264/eeg+eye+state>
-2. Mukamel, R. (2026). *COGS 109 — Modelling and Data Analysis Spring
+2. Mukamel, E. (2026). *COGS 109 — Modelling and Data Analysis Spring
    2026 Study Guide*. UC San Diego.
 3. James, G., Witten, D., Hastie, T., Tibshirani, R. (2021). *An
    Introduction to Statistical Learning*, 2nd ed. Springer.

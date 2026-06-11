@@ -79,8 +79,10 @@ block of brain--computer interfaces, drowsiness detection, and
 attention-monitoring systems. The UCI~\#264 EEG Eye State dataset is one
 of the most widely used benchmarks for this task. The dataset's originators
 report a best error of $2.7\%$ ($\approx 97.3\%$ accuracy) using the
-instance-based KStar classifier under Weka's default (shuffled) 10-fold
-cross-validation, while non-instance-based methods score far worse (Roesler
+instance-based KStar classifier under Weka's default 10-fold
+cross-validation, which randomises and class-stratifies the folds ($3.2\%$
+with default parameters; $2.7\%$ after tuning KStar's global-blend
+parameter), while non-instance-based methods score far worse (Roesler
 \& Suendermann, 2013); online tutorials and student write-ups likewise
 routinely report $k$-nearest-neighbour accuracies in the $95$--$98\%$ range
 under standard shuffled $k$-fold cross-validation.
@@ -148,7 +150,7 @@ the lag-1 autocorrelation of a single voltage channel is high
 ($\approx 0.97$ on average, ranging $0.91$--$0.99$ across the 14 channels
 after outlier removal)---adjacent samples are nearly identical---and the
 label, being piecewise-constant over long runs, is even more persistent:
-its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.86$ at lag~50
+its autocorrelation is $\approx 0.997$ at lag~1, $\approx 0.85$ at lag~50
 ($\approx 0.4$\,s), crossing zero only at very long lags
 (Figure~\ref{fig:autocorr}).
 
@@ -318,7 +320,7 @@ label each segment by its class-1 proportion, sort the segments by that
 proportion, and walk the sorted list in chunks of $5$; within each chunk
 the five segments are assigned to the five folds by a seed-fixed random
 permutation. The effect is that each fold receives one segment from each
-quintile of the class-1-proportion distribution, so every fold's class
+successive chunk along the sorted class-1-proportion distribution, so every fold's class
 balance is within $\sim$1.5\pp{} of the training partition's $\sim$46.5\%
 class-0 ($\sim$53.5\% class-1) balance.
 This keeps the temporal-isolation guarantee of blocked CV (neighbours stay
@@ -459,7 +461,7 @@ fold boundary, not to model quality: the model is $1$-NN in both cases and
 the training partition is identical---only the fold-assignment rule changes.
 Under shuffled CV the temporal neighbour of every test sample lands in a
 training fold with $\sim$80\% probability and carries the same label with
-$\sim$99.7\% probability (the lag-1 \emph{label} autocorrelation); under
+$>$99.8\% probability (only $23$ label changes across $14{,}976$ samples); under
 stratified blocked CV that neighbour is reserved into the test sample's own
 segment in all but the $<$1\% of cases that straddle a segment boundary. The
 honest within-recording accuracy at $k=1$, $77.8\% \pm 2.7\%$, is
@@ -512,7 +514,7 @@ low-dimensional subspace before deciding, destroying most of the
 high-frequency sample-to-sample similarity \knn{} relies on; their gaps are
 smaller still ($2.4$ and $2.8\pp$). \knn{} at $k=1$ is the only classifier
 whose prediction depends on the identity of the single nearest training
-sample---and its gap is $4$--$8\times$ larger than any other.
+sample---and its gap is $\sim$3.5--8$\times$ larger than any other.
 
 \subsection{Model estimation: final parameters and accuracy}
 
@@ -608,8 +610,9 @@ report $95$--$98\%$ \knn{} accuracy under shuffled $k$-fold. Our analysis
 suggests those numbers are a CV-protocol artefact: the honest
 within-recording accuracy is $77.8\%$ and the extra $\sim$20\pp{} is
 adjacent-sample leakage. Tellingly, even the dataset's originators obtain
-their best results with instance-based learners (KStar/IB1, $\approx 97\%$)
-under shuffled 10-fold CV while non-instance-based methods score far worse
+their best results with the instance-based learner KStar ($\approx 97\%$)
+under Weka's default (randomised, class-stratified) 10-fold CV while
+non-instance-based methods score far worse
 (Roesler \& Suendermann, 2013)---exactly the signature of leakage that
 instance-based models are uniquely able to exploit. This echoes
 broader cautions about i.i.d.\ CV on autocorrelated signals (Bergmeir \&
@@ -641,7 +644,7 @@ CV scheme---unrelated to the model itself.
     \emph{Journal of Machine Learning Research} 11:2079--2107.
   \item James, G., Witten, D., Hastie, T., \& Tibshirani, R. (2021).
     \emph{An Introduction to Statistical Learning}, 2nd ed. Springer.
-  \item Mukamel, R. (2026). \emph{COGS 109 --- Modelling and Data Analysis,
+  \item Mukamel, E. (2026). \emph{COGS 109 --- Modelling and Data Analysis,
     Spring 2026 Study Guide}. UC San Diego.
   \item Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in
     Python. \emph{Journal of Machine Learning Research} 12:2825--2830.
